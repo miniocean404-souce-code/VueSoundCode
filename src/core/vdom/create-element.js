@@ -13,8 +13,8 @@ import {normalizeChildren, simpleNormalizeChildren} from './helpers/index'
 const SIMPLE_NORMALIZE = 1
 const ALWAYS_NORMALIZE = 2
 
-// wrapper function for providing a more flexible interface
-// without getting yelled at by flow
+// wrapper function for providing a more flexible interface 包装器功能，用于提供更灵活的界面
+// without getting yelled at by flow 不会被流程大吼大叫
 export function createElement(
   context: Component,
   tag: any,
@@ -49,18 +49,18 @@ export function _createElement(
     )
     return createEmptyVNode()
   }
+
   // object syntax in v-bind
   if (isDef(data) && isDef(data.is)) {
     tag = data.is
   }
+
   if (!tag) {
-    // in case of component :is set to falsy value
+    //todo 创建空的vnode
     return createEmptyVNode()
   }
   // warn against non-primitive key
-  if (process.env.NODE_ENV !== 'production' &&
-    isDef(data) && isDef(data.key) && !isPrimitive(data.key)
-  ) {
+  if (process.env.NODE_ENV !== 'production' && isDef(data) && isDef(data.key) && !isPrimitive(data.key)) {
     if (!__WEEX__ || !('@binding' in data.key)) {
       warn(
         'Avoid using non-primitive value as key, ' +
@@ -69,6 +69,7 @@ export function _createElement(
       )
     }
   }
+
   // support single function children as default scoped slot
   if (Array.isArray(children) &&
     typeof children[0] === 'function'
@@ -105,13 +106,12 @@ export function _createElement(
       // unknown or unlisted namespaced elements
       // check at runtime because it may get assigned a namespace when its
       // parent normalizes children
-      vnode = new VNode(
-        tag, data, children,
-        undefined, undefined, context
+      vnode = new VNode(tag, data, children, undefined, undefined, context
       )
     }
   } else {
     // direct component options / constructor
+    // todo 直接组件选项和构造函数
     vnode = createComponent(tag, data, context, children)
   }
   if (Array.isArray(vnode)) {
