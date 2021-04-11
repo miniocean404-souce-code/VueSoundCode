@@ -22,6 +22,9 @@ export function setActiveInstance(vm: Component) {
   }
 }
 
+/**
+ * @param vm vm实例
+ */
 export function initLifecycle(vm: Component) {
   const options = vm.$options
 
@@ -48,6 +51,10 @@ export function initLifecycle(vm: Component) {
   vm._isBeingDestroyed = false
 }
 
+/**
+ *
+ * @param Vue 实例
+ */
 export function lifecycleMixin(Vue: Class<Component>) {
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
     const vm: Component = this

@@ -35,11 +35,7 @@ export function initMixin(Vue: Class<Component>) {
       // todo 初始化内部组件
       initInternalComponent(vm, options)
     } else {
-      vm.$options = mergeOptions(
-        resolveConstructorOptions(vm.constructor),
-        options || {},
-        vm
-      )
+      vm.$options = mergeOptions(resolveConstructorOptions(vm.constructor), options || {}, vm)
     }
 
     // 产生代理
@@ -75,15 +71,20 @@ export function initMixin(Vue: Class<Component>) {
   }
 }
 
-
-// ? 初始化内部组件
+/**
+ *
+ * @param vm todo Vm实例
+ * @param options todo 内部组件的选项
+ * todo 初始化内部组件
+ */
 export function initInternalComponent(vm: Component, options: InternalComponentOptions) {
   const opts = vm.$options = Object.create(vm.constructor.options)
-  // doing this because it's faster than dynamic enumeration.
+  // doing this because it's faster than dynamic enumeration. 这样做是因为它比动态枚举要快。
   const parentVnode = options._parentVnode
   opts.parent = options.parent
   opts._parentVnode = parentVnode
 
+  //todo 赋值父的数据给构造函数opts
   const vnodeComponentOptions = parentVnode.componentOptions
   opts.propsData = vnodeComponentOptions.propsData
   opts._parentListeners = vnodeComponentOptions.listeners

@@ -172,7 +172,7 @@ export function createComponent(
     }
   }
 
-  // install component management hooks onto the placeholder node
+  // install component management hooks onto the placeholder node 将组件管理挂钩安装到占位符节点上
   installComponentHooks(data)
 
   // return a placeholder vnode
@@ -216,12 +216,14 @@ export function createComponentInstanceForVnode(
   return new vnode.componentOptions.Ctor(options)
 }
 
+
 function installComponentHooks(data: VNodeData) {
   const hooks = data.hook || (data.hook = {})
   for (let i = 0; i < hooksToMerge.length; i++) {
     const key = hooksToMerge[i]
     const existing = hooks[key]
     const toMerge = componentVNodeHooks[key]
+    // todo 如果不相等，并且不存在 就将data.hook = {} 中挂载钩子
     if (existing !== toMerge && !(existing && existing._merged)) {
       hooks[key] = existing ? mergeHook(toMerge, existing) : toMerge
     }

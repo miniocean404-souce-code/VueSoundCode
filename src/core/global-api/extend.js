@@ -26,13 +26,17 @@ export function initExtend (Vue: GlobalAPI) {
     }
 
     const name = extendOptions.name || Super.options.name
+
+    // todo 检查组件命名
     if (process.env.NODE_ENV !== 'production' && name) {
       validateComponentName(name)
     }
 
+    // todo 初始化组件
     const Sub = function VueComponent (options) {
       this._init(options)
     }
+
     Sub.prototype = Object.create(Super.prototype)
     Sub.prototype.constructor = Sub
     Sub.cid = cid++
@@ -42,8 +46,8 @@ export function initExtend (Vue: GlobalAPI) {
     )
     Sub['super'] = Super
 
-    // For props and computed properties, we define the proxy getters on
-    // the Vue instances at extension time, on the extended prototype. This
+    // For props and computed properties, we define the proxy getters on   对于props和计算属性，我们在扩展原型的扩展时间在Vue实例上定义代理获取器。
+    // the Vue instances at extension time, on the extended prototype. This 这样可以避免为每个创建的实例调用Object.defineProperty。
     // avoids Object.defineProperty calls for each instance created.
     if (Sub.options.props) {
       initProps(Sub)

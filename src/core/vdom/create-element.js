@@ -95,10 +95,7 @@ export function _createElement(
           context
         )
       }
-      vnode = new VNode(
-        config.parsePlatformTagName(tag), data, children,
-        undefined, undefined, context
-      )
+      vnode = new VNode(config.parsePlatformTagName(tag), data, children, undefined, undefined, context)
     } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
       // component
       vnode = createComponent(Ctor, data, context, children, tag)
