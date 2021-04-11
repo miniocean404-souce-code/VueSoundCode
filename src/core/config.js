@@ -35,6 +35,7 @@ export type Config = {
   _lifecycleHooks: Array<string>;
 };
 
+
 export default ({
   /**
    * Option merge strategies (used in core/util/options)
