@@ -189,7 +189,7 @@ export function mountComponent(
       measure(`vue ${name} patch`, startTag, endTag)
     }
   } else {
-
+    // todo 定义updateComponent
     updateComponent = () => {
       vm._update(vm._render(), hydrating)
     }
