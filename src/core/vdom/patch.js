@@ -60,11 +60,11 @@ function createKeyToOldIdx(children, beginIdx, endIdx) {
 }
 
 export function createPatchFunction(backend) {
-  let i, j
-  const cbs = {}
-
   const {modules, nodeOps} = backend
 
+
+  let i, j
+  const cbs = {}
   for (i = 0; i < hooks.length; ++i) {
     cbs[hooks[i]] = []
     for (j = 0; j < modules.length; ++j) {
@@ -141,6 +141,7 @@ export function createPatchFunction(backend) {
     const data = vnode.data
     const children = vnode.children
     const tag = vnode.tag
+
     if (isDef(tag)) {
       if (process.env.NODE_ENV !== 'production') {
         if (data && data.pre) {
@@ -156,9 +157,8 @@ export function createPatchFunction(backend) {
         }
       }
 
-      vnode.elm = vnode.ns
-        ? nodeOps.createElementNS(vnode.ns, tag)
-        : nodeOps.createElement(tag, vnode)
+      vnode.elm = vnode.ns ? nodeOps.createElementNS(vnode.ns, tag) : nodeOps.createElement(tag, vnode)
+
       setScope(vnode)
 
       /* istanbul ignore if */
@@ -174,6 +174,7 @@ export function createPatchFunction(backend) {
           insert(parentElm, vnode.elm, refElm)
         }
         createChildren(vnode, children, insertedVnodeQueue)
+
         if (appendAsTree) {
           if (isDef(data)) {
             invokeCreateHooks(vnode, insertedVnodeQueue)
@@ -182,6 +183,7 @@ export function createPatchFunction(backend) {
         }
       } else {
         createChildren(vnode, children, insertedVnodeQueue)
+
         if (isDef(data)) {
           invokeCreateHooks(vnode, insertedVnodeQueue)
         }
@@ -691,33 +693,42 @@ export function createPatchFunction(backend) {
     }
   }
 
+  // todo 返回判断之后的函数调用
+  /**
+   * @oldVnode 表示旧的 VNode 节点，它也可以不存在或者是一个 DOM 对象
+   * @vnode    _render后返回的 VNode 的节点
+   * @hydrating 是否是服务端渲染
+   * @removeOnly removeOnly是给transition-group用的
+   */
   return function patch(oldVnode, vnode, hydrating, removeOnly) {
     if (isUndef(vnode)) {
       if (isDef(oldVnode)) invokeDestroyHook(oldVnode)
       return
     }
 
-    let isInitialPatch = false
-    const insertedVnodeQueue = []
+    let isInitialPatch = false //是初始化补丁吗
+    const insertedVnodeQueue = [] //插入Vnode队列
 
     if (isUndef(oldVnode)) {
-      // empty mount (likely as component), create new root element
+      // 空挂载（想组件一样），创建新的根元素 empty mount (likely as component), create new root element
       isInitialPatch = true
       createElm(vnode, insertedVnodeQueue)
     } else {
+      // todo 对比两个Vnode观察是否是同一个Vnode
       const isRealElement = isDef(oldVnode.nodeType)
       if (!isRealElement && sameVnode(oldVnode, vnode)) {
         // patch existing root node
         patchVnode(oldVnode, vnode, insertedVnodeQueue, null, null, removeOnly)
       } else {
         if (isRealElement) {
-          // mounting to a real element
-          // check if this is server-rendered content and if we can perform
+          // 挂载到真实元素 mounting to a real element
+          // 检查这是否是服务器渲染的内容以及我们是否可以执行 check if this is server-rendered content and if we can perform
           // a successful hydration.
           if (oldVnode.nodeType === 1 && oldVnode.hasAttribute(SSR_ATTR)) {
             oldVnode.removeAttribute(SSR_ATTR)
             hydrating = true
           }
+
           if (isTrue(hydrating)) {
             if (hydrate(oldVnode, vnode, insertedVnodeQueue)) {
               invokeInsertHook(vnode, insertedVnodeQueue, true)
@@ -732,12 +743,12 @@ export function createPatchFunction(backend) {
               )
             }
           }
-          // either not server-rendered, or hydration failed.
+          // 要么不是服务器渲染的，要么是水化失败。就给他一个空Vnode either not server-rendered, or hydration failed.
           // create an empty node and replace it
           oldVnode = emptyNodeAt(oldVnode)
         }
 
-        // replacing existing element
+        // 替换现有元素 replacing existing element
         const oldElm = oldVnode.elm
         const parentElm = nodeOps.parentNode(oldElm)
 
@@ -752,7 +763,7 @@ export function createPatchFunction(backend) {
           nodeOps.nextSibling(oldElm)
         )
 
-        // update parent placeholder node element, recursively
+        // 递归更新父占位符节点元素 update parent placeholder node element, recursively
         if (isDef(vnode.parent)) {
           let ancestor = vnode.parent
           const patchable = isPatchable(vnode)

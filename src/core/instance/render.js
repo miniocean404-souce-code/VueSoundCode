@@ -90,7 +90,7 @@ export function renderMixin(Vue: Class<Component>) {
       handleError(e, vm, `render`)
       // return error render result,
       // or previous vnode to prevent render error causing blank component
-      // todo 返回错误的渲染结果，或返回先前的vnode以防止导致空白组件的渲染错误
+      // todo 返回错误，并渲染成界面，或返回先前的vnode以防止导致空白组件的渲染错误
       if (process.env.NODE_ENV !== 'production' && vm.$options.renderError) {
         try {
           vnode = vm.$options.renderError.call(vm._renderProxy, vm.$createElement, e)
@@ -104,7 +104,7 @@ export function renderMixin(Vue: Class<Component>) {
     } finally {
       currentRenderingInstance = null //当前的渲染实例
     }
-    // if the returned array contains only a single node, allow it
+    // if the returned array contains only a single node, allow it 如果返回的数组仅包含一个节点，则允许它
     if (Array.isArray(vnode) && vnode.length === 1) {
       vnode = vnode[0]
     }
@@ -121,7 +121,7 @@ export function renderMixin(Vue: Class<Component>) {
       // todo 则返回空的vnode
       vnode = createEmptyVNode()
     }
-    // set parent
+    //todo 将子组件设置为Vnode的父节点，以便后续渲染组件内部的内容
     vnode.parent = _parentVnode
     return vnode
   }

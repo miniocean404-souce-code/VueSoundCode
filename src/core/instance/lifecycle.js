@@ -62,8 +62,10 @@ export function lifecycleMixin(Vue: Class<Component>) {
     const prevVnode = vm._vnode
     const restoreActiveInstance = setActiveInstance(vm)
     vm._vnode = vnode
+
     // Vue.prototype.__patch__ is injected in entry points
     // based on the rendering backend used.
+    // todo 如果有之前的节点就渲染，否则就直接渲染更新
     if (!prevVnode) {
       // initial render
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
@@ -71,7 +73,10 @@ export function lifecycleMixin(Vue: Class<Component>) {
       // updates
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
+
+    // todo 设置当前活跃的实例
     restoreActiveInstance()
+
     // update __vue__ reference
     if (prevEl) {
       prevEl.__vue__ = null

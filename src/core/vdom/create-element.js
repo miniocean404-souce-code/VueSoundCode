@@ -9,7 +9,7 @@ import {isDef, isObject, isPrimitive, isTrue, isUndef, resolveAsset, warn} from 
 
 import {normalizeChildren, simpleNormalizeChildren} from './helpers/index'
 
-// todo 简单标准 始终标准
+// todo 简单Vnode 复杂Vnode
 const SIMPLE_NORMALIZE = 1
 const ALWAYS_NORMALIZE = 2
 
@@ -21,7 +21,7 @@ export function createElement(
   data: any,
   children: any,
   normalizationType: any, //标准类型
-  alwaysNormalize: boolean
+  alwaysNormalize: boolean //是否是用户手写的render
 ): VNode | Array<VNode> {
   if (Array.isArray(data) || isPrimitive(data)) {
     normalizationType = children
@@ -78,11 +78,14 @@ export function _createElement(
     data.scopedSlots = {default: children[0]}
     children.length = 0
   }
+
+  // todo 对子节点进行磨平、合并
   if (normalizationType === ALWAYS_NORMALIZE) {
     children = normalizeChildren(children)
   } else if (normalizationType === SIMPLE_NORMALIZE) {
     children = simpleNormalizeChildren(children)
   }
+
   let vnode, ns
   if (typeof tag === 'string') {
     let Ctor
@@ -97,20 +100,22 @@ export function _createElement(
       }
       vnode = new VNode(config.parsePlatformTagName(tag), data, children, undefined, undefined, context)
     } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
-      // component
+      //todo 创建组件
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements
       // check at runtime because it may get assigned a namespace when its
       // parent normalizes children
-      vnode = new VNode(tag, data, children, undefined, undefined, context
-      )
+      // todo 创建当前Vnode
+      vnode = new VNode(tag, data, children, undefined, undefined, context)
     }
   } else {
     // direct component options / constructor
     // todo 直接组件选项和构造函数
     vnode = createComponent(tag, data, context, children)
   }
+
+
   if (Array.isArray(vnode)) {
     return vnode
   } else if (isDef(vnode)) {

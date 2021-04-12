@@ -23,7 +23,7 @@ Vue.config.isUnknownElement = isUnknownElement
 extend(Vue.options.directives, platformDirectives)
 extend(Vue.options.components, platformComponents)
 
-// 安装平台补丁功能
+// todo 平台挂载patch方法
 Vue.prototype.__patch__ = inBrowser ? patch : noop
 
 // todo 公共的mount方法，为编译版本编译好的模板挂载，only版本直接挂载
@@ -35,7 +35,7 @@ Vue.prototype.$mount = function (
   return mountComponent(this, el, hydrating)
 }
 
-// devtools 全局钩子
+// * devtools 全局钩子
 /* istanbul ignore next */
 if (inBrowser) {
   setTimeout(() => {
