@@ -88,6 +88,16 @@ const componentVNodeHooks = {
 
 const hooksToMerge = Object.keys(componentVNodeHooks)
 
+
+//!创建组件
+//!1、用大Vue继承Vue构造函数
+//!2、如果不是构造函数就报警告：组件定义错误
+//!3、将组件v-model 数据转换为 props 和 events
+//!4、提取 props
+//!5、创建函数性组件
+//!6、安装组件挂钩
+//!7、创建一个组件vnode
+//! 返回这个vnode
 export function createComponent(
   Ctor: Class<Component> | Function | Object | void,
   data: ?VNodeData,
@@ -99,7 +109,7 @@ export function createComponent(
     return
   }
 
-  // todo 取到进本构造函数Vue
+  // todo 取到大构造函数Vue，并继承构造函数
   const baseCtor = context.$options._base
   // 普通选项对象：将其转换为构造函数 plain options object: turn it into a constructor
   if (isObject(Ctor)) {
@@ -107,6 +117,7 @@ export function createComponent(
   }
 
   // 如果在此阶段它不是构造函数或异步组件工厂，就拒绝 if at this stage it's not a constructor or an async component factory, reject.
+  // todo 如果不是构造函数就报警告：组件定义错误
   if (typeof Ctor !== 'function') {
     if (process.env.NODE_ENV !== 'production') {
       warn(`Invalid Component definition: ${String(Ctor)}`, context)
@@ -133,6 +144,7 @@ export function createComponent(
     }
   }
 
+
   data = data || {}
 
   // 解析构造函数选项，以防在之后应用全局mixin resolve constructor options in case global mixins are applied after
@@ -140,15 +152,15 @@ export function createComponent(
   // todo 解析构造函数选项
   resolveConstructorOptions(Ctor)
 
-  // 将组件v-model 数据转换为 props 和 events transform component v-model data into props & events
+  // todo 将组件v-model 数据转换为 props 和 events transform component v-model data into props & events
   if (isDef(data.model)) {
     transformModel(Ctor.options, data)
   }
 
-  // 提取 props
+  // todo 提取 props
   const propsData = extractPropsFromVNodeData(data, Ctor, tag)
 
-  // 功能性组件 functional component
+  // todo 创建函数性组件 functional component
   if (isTrue(Ctor.options.functional)) {
     return createFunctionalComponent(Ctor, propsData, data, context, children)
   }
@@ -173,10 +185,10 @@ export function createComponent(
     }
   }
 
-  // 将组件管理挂钩安装到组件节点上 install component management hooks onto the placeholder node
+  //todo  将组件管理挂钩安装到组件节点上 install component management hooks onto the placeholder node
   installComponentHooks(data)
 
-  // 返回一个占位符vnode return a placeholder vnode
+  // todo 创建一个组件vnode return a placeholder vnode
   const name = Ctor.options.name || tag
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,

@@ -15,6 +15,8 @@ const ALWAYS_NORMALIZE = 2
 
 // wrapper function for providing a more flexible interface 包装器功能，用于提供更灵活的界面
 // without getting yelled at by flow 不会被流程大吼大叫
+//!创建元素
+//!1、利用闭包进行条件筛选
 export function createElement(
   context: Component,
   tag: any,
@@ -23,17 +25,24 @@ export function createElement(
   normalizationType: any, //标准类型
   alwaysNormalize: boolean //是否是用户手写的render
 ): VNode | Array<VNode> {
+
   if (Array.isArray(data) || isPrimitive(data)) {
     normalizationType = children
     children = data
     data = undefined
   }
+
   if (isTrue(alwaysNormalize)) {
     normalizationType = ALWAYS_NORMALIZE
   }
   return _createElement(context, tag, data, children, normalizationType)
 }
 
+
+//!_createElement函数
+//!1、没有tag创建空Vndoe
+//!2、对子节点进行磨平、合并
+//!3、创建组件构造函数
 export function _createElement(
   context: Component,
   tag?: string | Class<Component> | Function | Object,
@@ -41,6 +50,7 @@ export function _createElement(
   children?: any,
   normalizationType?: number
 ): VNode | Array<VNode> {
+
   if (isDef(data) && isDef((data: any).__ob__)) {
     process.env.NODE_ENV !== 'production' && warn(
       `Avoid using observed data object as vnode data: ${JSON.stringify(data)}\n` +
@@ -50,16 +60,17 @@ export function _createElement(
     return createEmptyVNode()
   }
 
-  // object syntax in v-bind
+  // todo v-bind中的对象语法 object syntax in v-bind
   if (isDef(data) && isDef(data.is)) {
     tag = data.is
   }
 
+  //todo 创建空的vnode
   if (!tag) {
-    //todo 创建空的vnode
     return createEmptyVNode()
   }
-  // warn against non-primitive key
+
+  // 警告非原始密钥 warn against non-primitive key
   if (process.env.NODE_ENV !== 'production' && isDef(data) && isDef(data.key) && !isPrimitive(data.key)) {
     if (!__WEEX__ || !('@binding' in data.key)) {
       warn(
@@ -69,11 +80,8 @@ export function _createElement(
       )
     }
   }
-
-  // support single function children as default scoped slot
-  if (Array.isArray(children) &&
-    typeof children[0] === 'function'
-  ) {
+  // 支持单功能子级作为默认作用域插槽 support single function children as default scoped slot
+  if (Array.isArray(children) && typeof children[0] === 'function') {
     data = data || {}
     data.scopedSlots = {default: children[0]}
     children.length = 0
@@ -86,6 +94,8 @@ export function _createElement(
     children = simpleNormalizeChildren(children)
   }
 
+
+  // todo
   let vnode, ns
   if (typeof tag === 'string') {
     let Ctor
@@ -100,7 +110,7 @@ export function _createElement(
       }
       vnode = new VNode(config.parsePlatformTagName(tag), data, children, undefined, undefined, context)
     } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
-      //todo 创建组件
+      //todo 创建组件构造哈数
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements
@@ -116,6 +126,7 @@ export function _createElement(
   }
 
 
+  // todo 如果Vnode是一个数组就返回
   if (Array.isArray(vnode)) {
     return vnode
   } else if (isDef(vnode)) {
@@ -126,6 +137,7 @@ export function _createElement(
     return createEmptyVNode()
   }
 }
+
 
 function applyNS(vnode, ns, force) {
   vnode.ns = ns
