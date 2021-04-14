@@ -99,15 +99,14 @@ export function createComponent(
     return
   }
 
+  // todo 取到进本构造函数Vue
   const baseCtor = context.$options._base
-
-  // plain options object: turn it into a constructor
+  // 普通选项对象：将其转换为构造函数 plain options object: turn it into a constructor
   if (isObject(Ctor)) {
     Ctor = baseCtor.extend(Ctor)
   }
 
-  // if at this stage it's not a constructor or an async component factory,
-  // reject.
+  // 如果在此阶段它不是构造函数或异步组件工厂，就拒绝 if at this stage it's not a constructor or an async component factory, reject.
   if (typeof Ctor !== 'function') {
     if (process.env.NODE_ENV !== 'production') {
       warn(`Invalid Component definition: ${String(Ctor)}`, context)
@@ -136,33 +135,35 @@ export function createComponent(
 
   data = data || {}
 
-  // resolve constructor options in case global mixins are applied after 解析构造函数选项，以防在之后应用全局mixin
-  // component constructor creation 组件构造函数的创建
+  // 解析构造函数选项，以防在之后应用全局mixin resolve constructor options in case global mixins are applied after
+  // 组件构造函数的创建 component constructor creation
+  // todo 解析构造函数选项
   resolveConstructorOptions(Ctor)
 
-  // transform component v-model data into props & events
+  // 将组件v-model 数据转换为 props 和 events transform component v-model data into props & events
   if (isDef(data.model)) {
     transformModel(Ctor.options, data)
   }
 
-  // extract props
+  // 提取 props
   const propsData = extractPropsFromVNodeData(data, Ctor, tag)
 
-  // functional component
+  // 功能性组件 functional component
   if (isTrue(Ctor.options.functional)) {
     return createFunctionalComponent(Ctor, propsData, data, context, children)
   }
 
-  // extract listeners, since these needs to be treated as
+  // 提取侦听器，因为这些侦听器需要被视为子组件侦听器，而不是DOM侦听器 extract listeners, since these needs to be treated as
   // child component listeners instead of DOM listeners
   const listeners = data.on
-  // replace with listeners with .native modifier
+  // 用.native修饰符替换为侦听器，以便在父组件补丁期间对其进行处理 replace with listeners with .native modifier
   // so it gets processed during parent component patch.
   data.on = data.nativeOn
 
   if (isTrue(Ctor.options.abstract)) {
     // abstract components do not keep anything
     // other than props & listeners & slot
+    // 抽象组件除了保留道具，监听器和插槽之外，不保留其他任何东西
 
     // work around flow
     const slot = data.slot
@@ -172,10 +173,10 @@ export function createComponent(
     }
   }
 
-  // install component management hooks onto the placeholder node 将组件管理挂钩安装到占位符节点上
+  // 将组件管理挂钩安装到组件节点上 install component management hooks onto the placeholder node
   installComponentHooks(data)
 
-  // return a placeholder vnode
+  // 返回一个占位符vnode return a placeholder vnode
   const name = Ctor.options.name || tag
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
@@ -195,7 +196,6 @@ export function createComponent(
   return vnode
 }
 
-
 export function createComponentInstanceForVnode(
   // we know it's MountedComponentVNode but flow doesn't
   vnode: any,
@@ -207,7 +207,7 @@ export function createComponentInstanceForVnode(
     _parentVnode: vnode,
     parent
   }
-  // check inline-template render functions
+  // 检查内联模板渲染功能 check inline-template render functions
   const inlineTemplate = vnode.data.inlineTemplate
   if (isDef(inlineTemplate)) {
     options.render = inlineTemplate.render

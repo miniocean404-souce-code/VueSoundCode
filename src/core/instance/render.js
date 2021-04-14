@@ -12,12 +12,17 @@ import VNode, {createEmptyVNode} from '../vdom/vnode'
 
 import {isUpdatingChildComponent} from './lifecycle'
 
+//!初始化render渲染
+//!1、置空_vnode、_staticTrees 缓存options、parentVnode、renderContext
+//!2、调用createElement函数
 export function initRender(vm: Component) {
-  vm._vnode = null // the root of the child tree
-  vm._staticTrees = null // v-once cached trees
+  vm._vnode = null // todo 子树的根 the root of the child tree
+  vm._staticTrees = null //todo 缓存一次的树 v-once cached trees
+
   const options = vm.$options
-  const parentVnode = vm.$vnode = options._parentVnode // the placeholder node in parent tree
-  const renderContext = parentVnode && parentVnode.context
+  const parentVnode = vm.$vnode = options._parentVnode // 父树中的占位符节点 the placeholder node in parent tree
+  const renderContext = parentVnode && parentVnode.context //内容
+
   vm.$slots = resolveSlots(options._renderChildren, renderContext)
   vm.$scopedSlots = emptyObject
 

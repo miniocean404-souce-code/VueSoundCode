@@ -19,7 +19,11 @@ const idToTemplate = cached((id) => {
 // todo 缓存runtime.index的$mount
 const mount = Vue.prototype.$mount;
 
-// todo 挂载$mount方法，返回
+// !挂载
+// !1、调用原生dom进行查找el
+// !2、如果是body或者dom元素及弹出警告
+// !3、如果没有render函数，分解template或者el转换成template函数 3.1 如果是el写了，获取html作为节点作为template
+// !4、最后调用公共的$mount方法进行挂载
 Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean

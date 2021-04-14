@@ -1,10 +1,10 @@
 /* @flow */
 
-import { ASSET_TYPES } from 'shared/constants'
-import { defineComputed, proxy } from '../instance/state'
-import { extend, mergeOptions, validateComponentName } from '../util/index'
+import {ASSET_TYPES} from 'shared/constants'
+import {defineComputed, proxy} from '../instance/state'
+import {extend, mergeOptions, validateComponentName} from '../util/index'
 
-export function initExtend (Vue: GlobalAPI) {
+export function initExtend(Vue: GlobalAPI) {
   /**
    * Each instance constructor, including Vue, has a unique
    * cid. This enables us to create wrapped "child
@@ -18,13 +18,16 @@ export function initExtend (Vue: GlobalAPI) {
    */
   Vue.extend = function (extendOptions: Object): Function {
     extendOptions = extendOptions || {}
+
     const Super = this
     const SuperId = Super.cid
     const cachedCtors = extendOptions._Ctor || (extendOptions._Ctor = {})
+
     if (cachedCtors[SuperId]) {
       return cachedCtors[SuperId]
     }
 
+    // todo 获取构造器的name或者当前Vue的name
     const name = extendOptions.name || Super.options.name
 
     // todo 检查组件命名
@@ -33,10 +36,11 @@ export function initExtend (Vue: GlobalAPI) {
     }
 
     // todo 初始化组件
-    const Sub = function VueComponent (options) {
+    const Sub = function VueComponent(options) {
       this._init(options)
     }
 
+    // todo 父类原型赋给子原型，子构造函数原型赋值为子
     Sub.prototype = Object.create(Super.prototype)
     Sub.prototype.constructor = Sub
     Sub.cid = cid++
@@ -63,15 +67,16 @@ export function initExtend (Vue: GlobalAPI) {
 
     // create asset registers, so extended classes
     // can have their private assets too.
+    // todo 注册资产以便后续使用 component directive filter
     ASSET_TYPES.forEach(function (type) {
       Sub[type] = Super[type]
     })
-    // enable recursive self-lookup
+    // 启用递归自查找 enable recursive self-lookup
     if (name) {
       Sub.options.components[name] = Sub
     }
 
-    // keep a reference to the super options at extension time.
+    // 在扩展时间保留对超级选项的引用。稍后在实例化中，我们可以检查Super的选项是否已更新 keep a reference to the super options at extension time.
     // later at instantiation we can check if Super's options have
     // been updated.
     Sub.superOptions = Super.options
@@ -84,14 +89,14 @@ export function initExtend (Vue: GlobalAPI) {
   }
 }
 
-function initProps (Comp) {
+function initProps(Comp) {
   const props = Comp.options.props
   for (const key in props) {
     proxy(Comp.prototype, `_props`, key)
   }
 }
 
-function initComputed (Comp) {
+function initComputed(Comp) {
   const computed = Comp.options.computed
   for (const key in computed) {
     defineComputed(Comp.prototype, key, computed[key])

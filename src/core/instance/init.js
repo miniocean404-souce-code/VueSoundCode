@@ -12,6 +12,11 @@ import {extend, formatComponentName, mergeOptions} from '../util/index'
 let uid = 0
 
 export function initMixin(Vue: Class<Component>) {
+
+  //!初始化(new Vue 以及 组件的初始化)
+  //!1、合并选项
+  //!2、初始化声明周期、事件、render函数、beforeCreate钩子、inject，Provide函数、state
+  //!3、$mount挂载
   Vue.prototype._init = function (options?: Object) {
     const vm: Component = this
     // a uid
@@ -46,7 +51,7 @@ export function initMixin(Vue: Class<Component>) {
     }
 
     // expose real self
-    // todo 初始化一堆实例
+    // todo 初始化声明周期、事件、render函数、beforeCreate钩子、inject，Provide函数、state
     vm._self = vm  //* 循环挂载
     initLifecycle(vm)
     initEvents(vm)

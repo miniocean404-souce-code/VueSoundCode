@@ -143,6 +143,13 @@ export function lifecycleMixin(Vue: Class<Component>) {
   }
 }
 
+//!挂载组件
+//!1、没有写render 或者 没有编译成功 就给他一个空Vnode，并且报警告
+//!2、进行beforeMount周期
+//!3、定义updateComponent
+//!4、new Watcher函数，调用 updateComponent 函数,渲染完成进行数据更新
+//!5、如果$vnode为空，将_isMounted状态设置为True,并且走mounted钩子
+//!最后将Vm实例返回
 export function mountComponent(
   vm: Component,
   el: ?Element,
@@ -171,6 +178,8 @@ export function mountComponent(
       }
     }
   }
+
+  // todo 进行beforeMount周期
   callHook(vm, 'beforeMount')
 
   // ! 性能埋点
@@ -201,8 +210,7 @@ export function mountComponent(
   }
 
   // 我们将其设置为监视程序构造函数中的vm._watcher，因为监视程序的初始修补程序可能会调用forceUpdate（例如，在子组件的已挂接钩子内部），它依赖于已定义的vm._watcher
-  // todo  调用 updateComponent 函数,渲染完成进行数据更新
-  // todo  将 updateComponent 设置为响应式
+  // todo new Watcher函数，调用 updateComponent 函数,渲染完成进行数据更新
   new Watcher(vm, updateComponent, noop, {
     before() {
       if (vm._isMounted && !vm._isDestroyed) {
@@ -214,6 +222,7 @@ export function mountComponent(
 
   // manually mounted instance, call mounted on self
   // mounted is called for render-created child components in its inserted hook
+  // todo 如果$vnode为空，将_isMounted状态设置为True,并且走mounted钩子
   if (vm.$vnode == null) {
     vm._isMounted = true
     callHook(vm, 'mounted')
