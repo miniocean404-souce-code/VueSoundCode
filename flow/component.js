@@ -35,6 +35,7 @@ declare interface Component {
   $listeners: { [key: string]: Function | Array<Function> };
   $isServer: boolean;
 
+
   // public methods
   $mount: (el?: Element | string, hydrating?: boolean) => Component;
   $forceUpdate: () => void;
