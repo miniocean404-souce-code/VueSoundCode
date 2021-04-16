@@ -23,6 +23,7 @@ import {
 } from 'weex/runtime/recycle-list/render-component-template'
 
 // inline hooks to be invoked on component VNodes during patch
+// !patch调用组件钩子
 const componentVNodeHooks = {
   init(vnode: VNodeWithData, hydrating: boolean): ?boolean {
     if (
@@ -86,6 +87,7 @@ const componentVNodeHooks = {
   }
 }
 
+// !获取组件钩子的数组
 const hooksToMerge = Object.keys(componentVNodeHooks)
 
 
@@ -185,7 +187,7 @@ export function createComponent(
     }
   }
 
-  //todo  将组件管理挂钩安装到组件节点上 install component management hooks onto the placeholder node
+  //todo  将组件钩子安装到组件节点上 install component management hooks onto the placeholder node
   installComponentHooks(data)
 
   // todo 创建一个组件vnode return a placeholder vnode
@@ -228,7 +230,7 @@ export function createComponentInstanceForVnode(
   return new vnode.componentOptions.Ctor(options)
 }
 
-
+//!将挂钩放置到data中
 function installComponentHooks(data: VNodeData) {
   const hooks = data.hook || (data.hook = {})
   for (let i = 0; i < hooksToMerge.length; i++) {
