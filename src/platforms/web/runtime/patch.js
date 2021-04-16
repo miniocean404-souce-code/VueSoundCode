@@ -11,3 +11,4 @@ const modules = platformModules.concat(baseModules)
 
 // todo nodeOps封装了一系列 DOM 操作的方法、modules定义了一些模块的钩子函数的实现
 export const patch: Function = createPatchFunction({nodeOps, modules})
+

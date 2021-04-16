@@ -59,9 +59,9 @@ function createKeyToOldIdx(children, beginIdx, endIdx) {
   return map
 }
 
+// !定义path函数
 export function createPatchFunction(backend) {
   const {modules, nodeOps} = backend
-
 
   let i, j
   const cbs = {}

@@ -66,10 +66,11 @@ export default class Watcher {
     this.expression = process.env.NODE_ENV !== 'production'
       ? expOrFn.toString()
       : ''
-    // parse expression for getter
+    // todo 将函数updateComponent赋值给getter parse expression for getter
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
     } else {
+      // todo 将表达式解析传递给getter 解析失败就报错
       this.getter = parsePath(expOrFn)
       if (!this.getter) {
         this.getter = noop

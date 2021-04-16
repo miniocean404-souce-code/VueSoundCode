@@ -69,7 +69,6 @@ export function renderMixin(Vue: Class<Component>) {
     return nextTick(fn, this)
   }
 
-
   //todo 挂载render函数
   Vue.prototype._render = function (): VNode {
     const vm: Component = this
@@ -87,6 +86,7 @@ export function renderMixin(Vue: Class<Component>) {
       // There's no need to maintain a stack because all render fns are called 无需维护堆栈，因为所有渲染fns均被调用
       // separately from one another. Nested component's render fns are called 彼此分开。修补父组件时，将调用嵌套组件的渲染fns。
       // when parent component is patched.
+      // todo 当前渲染实例
       currentRenderingInstance = vm
 
       // todo 调用$createElement
@@ -107,7 +107,8 @@ export function renderMixin(Vue: Class<Component>) {
         vnode = vm._vnode
       }
     } finally {
-      currentRenderingInstance = null //当前的渲染实例
+      //todo 当前的渲染实例置空
+      currentRenderingInstance = null
     }
     // if the returned array contains only a single node, allow it 如果返回的数组仅包含一个节点，则允许它
     if (Array.isArray(vnode) && vnode.length === 1) {

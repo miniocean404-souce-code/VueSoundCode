@@ -19,7 +19,7 @@ export function initMixin(Vue: Class<Component>) {
   //!3、$mount挂载
   Vue.prototype._init = function (options?: Object) {
     const vm: Component = this
-    // a uid
+    // todo 每一个Vue有一个唯一的UID
     vm._uid = uid++
 
     let startTag, endTag
@@ -76,12 +76,10 @@ export function initMixin(Vue: Class<Component>) {
   }
 }
 
-/**
- *
- * @param vm todo Vm实例
- * @param options todo 内部组件的选项
- * todo 初始化内部组件
- */
+// !初始化内部组件
+// !1、克隆一份option给当前Vue实例、父组件给parent、父Vnode实例给_parentVnode
+// !2、父Vnode的组件选项给当前的Vue实例
+// !3、当前render存在就赋值给当前的Vue
 export function initInternalComponent(vm: Component, options: InternalComponentOptions) {
   const opts = vm.$options = Object.create(vm.constructor.options)
   // doing this because it's faster than dynamic enumeration. 这样做是因为它比动态枚举要快。
