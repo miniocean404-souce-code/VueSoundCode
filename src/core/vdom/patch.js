@@ -60,9 +60,11 @@ function createKeyToOldIdx(children, beginIdx, endIdx) {
 }
 
 // !定义path函数
+// !1、加载时候闭包过滤平台，然后返回一个真实patch函数使用
+// !2、patch时候递归查找当前组件的子组件进行createComponent
 export function createPatchFunction(backend) {
-  const {modules, nodeOps} = backend
 
+  const {modules, nodeOps} = backend
   let i, j
   const cbs = {}
   for (i = 0; i < hooks.length; ++i) {
@@ -74,6 +76,7 @@ export function createPatchFunction(backend) {
     }
   }
 
+  // todo 创建一个空Vnode节点
   function emptyNodeAt(elm) {
     return new VNode(nodeOps.tagName(elm).toLowerCase(), {}, [], undefined, elm)
   }
@@ -132,9 +135,9 @@ export function createPatchFunction(backend) {
       // associated DOM element for it.
       vnode = ownerArray[index] = cloneVNode(vnode)
     }
-
     vnode.isRootInsert = !nested // for transition enter check
 
+    // !创建组件
     if (createComponent(vnode, insertedVnodeQueue, parentElm, refElm)) {
       return
     }
@@ -203,11 +206,13 @@ export function createPatchFunction(backend) {
     }
   }
 
-
+// !patch中的createComponent 创建组件
   function createComponent(vnode, insertedVnodeQueue, parentElm, refElm) {
     let i = vnode.data
     if (isDef(i)) {
       const isReactivated = isDef(vnode.componentInstance) && i.keepAlive
+
+      // todo i被搞成init钩子函数
       if (isDef(i = i.hook) && isDef(i = i.init)) {
         i(vnode, false /* hydrating */)
       }
@@ -700,7 +705,7 @@ export function createPatchFunction(backend) {
 
   // todo 返回判断之后的函数调用
   /**
-   * @oldVnode 表示旧的 VNode 节点，它也可以不存在或者是一个 DOM 对象
+   * @oldVnode 表示旧的 VNode 节点，它也可以不存在或者是一个 DOM 对象 也就是$el
    * @vnode    _render后返回的 VNode 的节点
    * @hydrating 是否是服务端渲染
    * @removeOnly removeOnly是给transition-group用的
@@ -711,29 +716,29 @@ export function createPatchFunction(backend) {
       return
     }
 
-    let isInitialPatch = false //是初始化补丁吗
+    let isInitialPatch = false //是否是打过补丁的
     const insertedVnodeQueue = [] //插入Vnode队列
 
+    // 空挂载（想组件一样），创建新的根元素 empty mount (likely as component), create new root element
     if (isUndef(oldVnode)) {
-      // 空挂载（想组件一样），创建新的根元素 empty mount (likely as component), create new root element
       isInitialPatch = true
       createElm(vnode, insertedVnodeQueue)
     } else {
-      // todo 对比两个Vnode观察是否是同一个Vnode
+      // todo 是否是真实dom
       const isRealElement = isDef(oldVnode.nodeType)
       if (!isRealElement && sameVnode(oldVnode, vnode)) {
-        // patch existing root node
+        // todo 利用diff算法修补节点
         patchVnode(oldVnode, vnode, insertedVnodeQueue, null, null, removeOnly)
       } else {
         if (isRealElement) {
-          // 挂载到真实元素 mounting to a real element
-          // 检查这是否是服务器渲染的内容以及我们是否可以执行 check if this is server-rendered content and if we can perform
+          // mounting to a real element
+          // check if this is server-rendered content and if we can perform
           // a successful hydration.
+          // * 服务渲染相关
           if (oldVnode.nodeType === 1 && oldVnode.hasAttribute(SSR_ATTR)) {
             oldVnode.removeAttribute(SSR_ATTR)
             hydrating = true
           }
-
           if (isTrue(hydrating)) {
             if (hydrate(oldVnode, vnode, insertedVnodeQueue)) {
               invokeInsertHook(vnode, insertedVnodeQueue, true)
@@ -748,16 +753,19 @@ export function createPatchFunction(backend) {
               )
             }
           }
-          // 要么不是服务器渲染的，要么是水化失败。就给他一个空Vnode either not server-rendered, or hydration failed.
+          // either not server-rendered, or hydration failed.
           // create an empty node and replace it
+          // todo 创建空Vnode
           oldVnode = emptyNodeAt(oldVnode)
         }
 
-        // 替换现有元素 replacing existing element
+        // todo 空Vnode的真实节点
         const oldElm = oldVnode.elm
+        // todo 找到这个空Vnode的父真实节点
         const parentElm = nodeOps.parentNode(oldElm)
 
         // create new node
+        //!创建node节点
         createElm(
           vnode,
           insertedVnodeQueue,
@@ -765,7 +773,7 @@ export function createPatchFunction(backend) {
           // leaving transition. Only happens when combining transition +
           // keep-alive + HOCs. (#4590)
           oldElm._leaveCb ? null : parentElm,
-          nodeOps.nextSibling(oldElm)
+          nodeOps.nextSibling(oldElm) //真实节点的下一个节点
         )
 
         // 递归更新父占位符节点元素 update parent placeholder node element, recursively

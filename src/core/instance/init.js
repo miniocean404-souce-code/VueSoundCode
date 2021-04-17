@@ -34,7 +34,7 @@ export function initMixin(Vue: Class<Component>) {
     vm._isVue = true
 
 
-    // todo 如果是组件就合并组件否则就讲new Vue的选项进行合并
+    // todo 如果是组件就合并组件否则就讲new Vue的选项进行合并 来自组件patch中递归调用，利用vnode进行创建子组件，并对其初始化
     if (options && options._isComponent) {
       // 优化内部组件实例化，因为动态选项合并非常慢，并且没有内部组件选项需要特殊处理。
       // todo 初始化内部组件
@@ -45,6 +45,7 @@ export function initMixin(Vue: Class<Component>) {
 
     // 产生代理
     if (process.env.NODE_ENV !== 'production') {
+      // todo 生成一个Vm代理
       initProxy(vm)
     } else {
       vm._renderProxy = vm
@@ -58,6 +59,7 @@ export function initMixin(Vue: Class<Component>) {
     initRender(vm)
     callHook(vm, 'beforeCreate')
     initInjections(vm) // resolve injections before data/props
+    // todo 初始化data和props等
     initState(vm)
     initProvide(vm) // resolve provide after data/props
     callHook(vm, 'created')
@@ -76,16 +78,20 @@ export function initMixin(Vue: Class<Component>) {
   }
 }
 
-// !初始化内部组件
-// !1、克隆一份option给当前Vue实例、父组件给parent、父Vnode实例给_parentVnode
+// !初始化组件内部组件
+// !1、克隆一份原型链上的Vue option给当前组件构造函数的对象、父组件给parent、父Vnode实例给_parentVnode
 // !2、父Vnode的组件选项给当前的Vue实例
 // !3、当前render存在就赋值给当前的Vue
 export function initInternalComponent(vm: Component, options: InternalComponentOptions) {
   const opts = vm.$options = Object.create(vm.constructor.options)
   // doing this because it's faster than dynamic enumeration. 这样做是因为它比动态枚举要快。
+  //todo _parentVnode 正在实例化组件的父Vnode
   const parentVnode = options._parentVnode
+  //todo 父Vnode的真实DOM
   opts.parent = options.parent
+  // todo 正在实例化子组件的_parentVnode添加他的父Vnode
   opts._parentVnode = parentVnode
+
 
   //todo 赋值父的数据给构造函数opts
   const vnodeComponentOptions = parentVnode.componentOptions
@@ -94,6 +100,7 @@ export function initInternalComponent(vm: Component, options: InternalComponentO
   opts._renderChildren = vnodeComponentOptions.children
   opts._componentTag = vnodeComponentOptions.tag
 
+  // todo 当组件中递归渲染时候是没有render函数
   if (options.render) {
     opts.render = options.render
     opts.staticRenderFns = options.staticRenderFns

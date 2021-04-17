@@ -25,6 +25,7 @@ import {
 // inline hooks to be invoked on component VNodes during patch
 // !patch调用组件钩子
 const componentVNodeHooks = {
+  // !将子组件进行挂载
   init(vnode: VNodeWithData, hydrating: boolean): ?boolean {
     if (
       vnode.componentInstance &&
@@ -35,6 +36,8 @@ const componentVNodeHooks = {
       const mountedNode: any = vnode // work around flow
       componentVNodeHooks.prepatch(mountedNode, mountedNode)
     } else {
+      // todo 把当前的vnode和正在活跃的实例传入 比如 App组件和#app 元素 返回给Vnode的componentInstance
+      // todo 初始化当前子组件的this实例给child,最后进行挂载
       const child = vnode.componentInstance = createComponentInstanceForVnode(
         vnode,
         activeInstance
@@ -210,12 +213,15 @@ export function createComponent(
   return vnode
 }
 
+//!将Vnode的子组件创建成组件构造器
 export function createComponentInstanceForVnode(
   // we know it's MountedComponentVNode but flow doesn't
   vnode: any,
   // activeInstance in lifecycle state
   parent: any
 ): Component {
+
+  // todo 缓存当前组件和当前组件的挂载的真实DOM 比如App组件和#app
   const options: InternalComponentOptions = {
     _isComponent: true,
     _parentVnode: vnode,
@@ -227,6 +233,8 @@ export function createComponentInstanceForVnode(
     options.render = inlineTemplate.render
     options.staticRenderFns = inlineTemplate.staticRenderFns
   }
+
+  // todo 对当前实例化的子组件对象 调用sub函数中的_init进行初始化，并且初始化的this指向当前组件的构造函数对象 当前：App 子：App内部组件
   return new vnode.componentOptions.Ctor(options)
 }
 

@@ -21,6 +21,7 @@ export function initRender(vm: Component) {
 
   const options = vm.$options
   const parentVnode = vm.$vnode = options._parentVnode // 父树中的占位符节点 the placeholder node in parent tree
+  // todo 如果parentVnode存在就把parentVnode.context赋给变量，否则就把parentVnode赋给变量
   const renderContext = parentVnode && parentVnode.context //内容
 
   vm.$slots = resolveSlots(options._renderChildren, renderContext)
@@ -30,9 +31,11 @@ export function initRender(vm: Component) {
   // so that we get proper render context inside it.
   // args order: tag, data, children, normalizationType, alwaysNormalize
   // internal version is used by render functions compiled from templates
+  // todo 无组件渲染
   vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
   // normalization is always applied for the public version, used in
   // user-written render functions.
+  // todo 组件渲染
   vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
 
   // $attrs & $listeners are exposed for easier HOC creation.

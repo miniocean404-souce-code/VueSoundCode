@@ -29,6 +29,7 @@ export function initLifecycle(vm: Component) {
   const options = vm.$options
 
   // locate first non-abstract parent
+  //todo 如果是组件递归，获取当前组件的父组件的真事DOM，并且在真实DOM中push进当前的初始化的组件实例
   let parent = options.parent
   if (parent && !options.abstract) {
     while (parent.$options.abstract && parent.$parent) {
@@ -37,7 +38,10 @@ export function initLifecycle(vm: Component) {
     parent.$children.push(vm)
   }
 
+  //todo 如果是初始化的组件,在其上面添加真实Dom
+  //todo 如果是初始化的组件,在其上面添加根真实DOM
   vm.$parent = parent
+  // 当前的父Vue实例赋给$root否则将Vue赋给$root
   vm.$root = parent ? parent.$root : vm
   vm.$children = []
   vm.$refs = {}
@@ -57,6 +61,8 @@ export function lifecycleMixin(Vue: Class<Component>) {
     const prevEl = vm.$el
     const prevVnode = vm._vnode
     const restoreActiveInstance = setActiveInstance(vm)
+
+    // todo 当前实例的子Vnode
     vm._vnode = vnode
 
     // Vue.prototype.__patch__ is injected in entry points
