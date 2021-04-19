@@ -101,19 +101,23 @@ export function lifecycleMixin(Vue: Class<Component>) {
     }
   }
 
+  // !组件销毁钩子
   Vue.prototype.$destroy = function () {
     const vm: Component = this
     if (vm._isBeingDestroyed) {
       return
     }
+
+    // todo 调用beforeDestroy钩子函数
     callHook(vm, 'beforeDestroy')
-    vm._isBeingDestroyed = true
-    // remove self from parent
+    vm._isBeingDestroyed = true //正在销毁
+
+    // 从父中移除我 remove self from parent
     const parent = vm.$parent
     if (parent && !parent._isBeingDestroyed && !vm.$options.abstract) {
       remove(parent.$children, vm)
     }
-    // teardown watchers
+    // 移除观察者 teardown watchers
     if (vm._watcher) {
       vm._watcher.teardown()
     }
@@ -121,14 +125,16 @@ export function lifecycleMixin(Vue: Class<Component>) {
     while (i--) {
       vm._watchers[i].teardown()
     }
+
+
     // remove reference from data ob
     // frozen object may not have observer.
     if (vm._data.__ob__) {
       vm._data.__ob__.vmCount--
     }
     // call the last hook...
-    vm._isDestroyed = true
-    // invoke destroy hooks on current rendered tree
+    vm._isDestroyed = true //已经被销毁
+    // 在当前渲染的树上调用销毁钩子 invoke destroy hooks on current rendered tree
     vm.__patch__(vm._vnode, null)
     // fire destroyed hook
     callHook(vm, 'destroyed')
@@ -354,6 +360,7 @@ export function deactivateChildComponent(vm: Component, direct?: boolean) {
   }
 }
 
+// !根据传过来的生命周期字符串 遍历执行 声明周期钩子
 export function callHook(vm: Component, hook: string) {
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget()

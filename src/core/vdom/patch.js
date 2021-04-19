@@ -579,6 +579,7 @@ export function createPatchFunction(backend) {
     }
   }
 
+  // 调用插入挂钩
   function invokeInsertHook(vnode, queue, initial) {
     // delay insert hooks for component root nodes, invoke them after the
     // element is really inserted

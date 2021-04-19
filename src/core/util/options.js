@@ -261,6 +261,7 @@ strats.provide = mergeDataOrFn
 /**
  * Default strategy.
  */
+// todo 子是否是undefined 是就用父的，不是就用子的
 const defaultStrat = function (parentVal: any, childVal: any): any {
   return childVal === undefined
     ? parentVal
@@ -407,16 +408,18 @@ export function mergeOptions (
   // the result of another mergeOptions call.
   // Only merged options has the _base property.
   if (!child._base) {
+    // todo 1.先递归把extends和mixins合并到parent上
     if (child.extends) {
       parent = mergeOptions(parent, child.extends, vm)
     }
+    //todo 2.然后遍历parent，调用mergeField
     if (child.mixins) {
       for (let i = 0, l = child.mixins.length; i < l; i++) {
         parent = mergeOptions(parent, child.mixins[i], vm)
       }
     }
   }
-
+  //todo 3.然后再遍历child，如果key不在parent的自身属性上，则调用mergeField。
   const options = {}
   let key
   for (key in parent) {
