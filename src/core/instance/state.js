@@ -22,6 +22,8 @@ import {
   warn
 } from '../util/index'
 
+
+// todo 将get set 方法定义到vm实例中以便设置和获取_data
 const sharedPropertyDefinition = {
   enumerable: true,
   configurable: true,
@@ -29,7 +31,6 @@ const sharedPropertyDefinition = {
   set: noop
 }
 
-// todo 将get set 方法定义到vm实例中以便设置和获取_data
 export function proxy(target: Object, sourceKey: string, key: string) {
   sharedPropertyDefinition.get = function proxyGetter() {
     return this[sourceKey][key]
@@ -41,7 +42,7 @@ export function proxy(target: Object, sourceKey: string, key: string) {
 }
 
 
-// todo 初始化new Vue中的参数列表
+// todo 初始化new Vue中data props 等
 export function initState(vm: Component) {
   vm._watchers = []
   const opts = vm.$options
@@ -69,8 +70,10 @@ function initProps(vm: Component, propsOptions: Object) {
   if (!isRoot) {
     toggleObserving(false)
   }
+
   for (const key in propsOptions) {
     keys.push(key)
+    // todo 检查属性规则
     const value = validateProp(key, propsOptions, propsData, vm)
     /* istanbul ignore else */
     if (process.env.NODE_ENV !== 'production') {
@@ -94,6 +97,7 @@ function initProps(vm: Component, propsOptions: Object) {
         }
       })
     } else {
+      // 定义响应式
       defineReactive(props, key, value)
     }
     // static props are already proxied on the component's prototype
@@ -106,9 +110,11 @@ function initProps(vm: Component, propsOptions: Object) {
   toggleObserving(true)
 }
 
+
 function initData(vm: Component) {
   let data = vm.$options.data
   // todo 真正访问的是_data
+  // todo data 是函数的原因
   data = vm._data = typeof data === 'function'
     ? getData(data, vm)
     : data || {}
@@ -124,6 +130,7 @@ function initData(vm: Component) {
   }
 
   // 实例上的数据代理
+  // todo 判断是否方法中有重名的
   const keys = Object.keys(data)
   const props = vm.$options.props
   const methods = vm.$options.methods
@@ -131,7 +138,6 @@ function initData(vm: Component) {
   while (i--) {
     const key = keys[i]
     if (process.env.NODE_ENV !== 'production') {
-      // todo 判断是否方法中有重名的
       if (methods && hasOwn(methods, key)) {
         warn(
           `Method "${key}" has already been defined as a data property.`,
@@ -146,7 +152,7 @@ function initData(vm: Component) {
         vm
       )
     } else if (!isReserved(key)) {
-      // todo 将data挂载VM实例上
+      // todo 将data挂载代理对象中的get set 方法李
       proxy(vm, `_data`, key)
     }
   }
@@ -169,6 +175,7 @@ export function getData(data: Function, vm: Component): any {
 
 const computedWatcherOptions = {lazy: true}
 
+
 function initComputed(vm: Component, computed: Object) {
   // $flow-disable-line
   const watchers = vm._computedWatchers = Object.create(null)
@@ -176,15 +183,14 @@ function initComputed(vm: Component, computed: Object) {
   const isSSR = isServerRendering()
 
   for (const key in computed) {
+    // todo 获取定义的每一个computed
     const userDef = computed[key]
     const getter = typeof userDef === 'function' ? userDef : userDef.get
     if (process.env.NODE_ENV !== 'production' && getter == null) {
-      warn(
-        `Getter is missing for computed property "${key}".`,
-        vm
-      )
+      warn(`Getter is missing for computed property "${key}".`, vm)
     }
 
+    // todo 渲染watch中添加computed watcher
     if (!isSSR) {
       // create internal watcher for the computed property.
       watchers[key] = new Watcher(
@@ -198,6 +204,7 @@ function initComputed(vm: Component, computed: Object) {
     // component-defined computed properties are already defined on the
     // component prototype. We only need to define computed properties defined
     // at instantiation here.
+    // todo 在vm中扩展自定义computed watcher，并且检查是否有重复定义的其他变量
     if (!(key in vm)) {
       defineComputed(vm, key, userDef)
     } else if (process.env.NODE_ENV !== 'production') {
@@ -210,18 +217,22 @@ function initComputed(vm: Component, computed: Object) {
   }
 }
 
+// !判断用户不同情况，进行computed定义
 export function defineComputed(
   target: any,
   key: string,
   userDef: Object | Function
 ) {
   const shouldCache = !isServerRendering()
+
+  // todo 创建createComputedGetter，将setter置空
   if (typeof userDef === 'function') {
     sharedPropertyDefinition.get = shouldCache
       ? createComputedGetter(key)
       : createGetterInvoker(userDef)
     sharedPropertyDefinition.set = noop
   } else {
+    // todo 如果是getter setter就走这里
     sharedPropertyDefinition.get = userDef.get
       ? shouldCache && userDef.cache !== false
         ? createComputedGetter(key)
@@ -229,8 +240,9 @@ export function defineComputed(
       : noop
     sharedPropertyDefinition.set = userDef.set || noop
   }
-  if (process.env.NODE_ENV !== 'production' &&
-    sharedPropertyDefinition.set === noop) {
+
+  // todo 生产模式中 没有set但是使用了set进行警告
+  if (process.env.NODE_ENV !== 'production' && sharedPropertyDefinition.set === noop) {
     sharedPropertyDefinition.set = function () {
       warn(
         `Computed property "${key}" was assigned to but it has no setter.`,
@@ -238,17 +250,22 @@ export function defineComputed(
       )
     }
   }
+
+  // todo 添加用户自定义computed
   Object.defineProperty(target, key, sharedPropertyDefinition)
 }
 
+// !返回给computed的getter
 function createComputedGetter(key) {
   return function computedGetter() {
     const watcher = this._computedWatchers && this._computedWatchers[key]
     if (watcher) {
+      // todo watcher：初始化dirty为true、value赋值、dirty置为false
       if (watcher.dirty) {
         watcher.evaluate()
       }
       if (Dep.target) {
+        // todo 将watch添加到 newDepIds newDeps
         watcher.depend()
       }
       return watcher.value

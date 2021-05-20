@@ -110,7 +110,7 @@ export function _createElement(
       }
       vnode = new VNode(config.parsePlatformTagName(tag), data, children, undefined, undefined, context)
     } else if ((!data || !data.pre) && isDef(Ctor = resolveAsset(context.$options, 'components', tag))) {
-      //todo 创建组件构造哈数
+      //todo 组件注册
       vnode = createComponent(Ctor, data, context, children, tag)
     } else {
       // unknown or unlisted namespaced elements

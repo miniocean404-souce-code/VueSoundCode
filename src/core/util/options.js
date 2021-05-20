@@ -442,6 +442,7 @@ export function mergeOptions (
  * This function is used because child instances need access
  * to assets defined in its ancestor chain.
  */
+// !_createElement 过程中 查找全局注册的组件
 export function resolveAsset (
   options: Object,
   type: string,
@@ -452,8 +453,11 @@ export function resolveAsset (
   if (typeof id !== 'string') {
     return
   }
+
+  // todo 缓存组件全局对象
   const assets = options[type]
   // check local registration variations first
+  // todo 先直接使用id拿，如果不存在，则把id变成驼峰的形式再拿，如果仍然不存在则在驼峰的基础上把首字母再变成大写的形式再拿 如果仍然拿不到则报错。
   if (hasOwn(assets, id)) return assets[id]
   const camelizedId = camelize(id)
   if (hasOwn(assets, camelizedId)) return assets[camelizedId]

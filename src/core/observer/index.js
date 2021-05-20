@@ -34,6 +34,7 @@ export function toggleObserving (value: boolean) {
  * object's property keys into getter/setters that
  * collect dependencies and dispatch updates.
  */
+// !观察者类
 export class Observer {
   value: any;
   dep: Dep;
@@ -44,6 +45,8 @@ export class Observer {
     this.dep = new Dep()
     this.vmCount = 0
     def(value, '__ob__', this)
+
+    // todo 数组调用
     if (Array.isArray(value)) {
       if (hasProto) {
         protoAugment(value, arrayMethods)
@@ -52,6 +55,7 @@ export class Observer {
       }
       this.observeArray(value)
     } else {
+      // todo 对象调用
       this.walk(value)
     }
   }
@@ -61,6 +65,7 @@ export class Observer {
    * getter/setters. This method should only be called when
    * value type is Object.
    */
+
   walk (obj: Object) {
     const keys = Object.keys(obj)
     for (let i = 0; i < keys.length; i++) {
@@ -71,6 +76,7 @@ export class Observer {
   /**
    * Observe a list of Array items.
    */
+  // todo 递归调用数组中数据
   observeArray (items: Array<any>) {
     for (let i = 0, l = items.length; i < l; i++) {
       observe(items[i])
@@ -107,10 +113,13 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
  */
+// todo observe的功能就是用来给 VNode 的对象类型数据添加一个Observer，如果已经添加过则直接返回，否则在满足一定条件下去实例化一个Observer对象实例。接下来我们来看一下Observer的作用。
 export function observe (value: any, asRootData: ?boolean): Observer | void {
   if (!isObject(value) || value instanceof VNode) {
     return
   }
+
+  // todo 如果存在响应式就缓存响应式
   let ob: Observer | void
   if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
     ob = value.__ob__
@@ -121,6 +130,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
     Object.isExtensible(value) &&
     !value._isVue
   ) {
+    // 创建新的Observer
     ob = new Observer(value)
   }
   if (asRootData && ob) {
@@ -129,9 +139,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
   return ob
 }
 
-/**
- * Define a reactive property on an Object.
- */
+//!定义响应式
 export function defineReactive (
   obj: Object,
   key: string,
@@ -141,18 +149,20 @@ export function defineReactive (
 ) {
   const dep = new Dep()
 
+  // todo 获取对象定义的配置
   const property = Object.getOwnPropertyDescriptor(obj, key)
   if (property && property.configurable === false) {
     return
   }
 
-  // cater for pre-defined getter/setters
+  // todo 获取属性的get set 没有就返回property
   const getter = property && property.get
   const setter = property && property.set
   if ((!getter || setter) && arguments.length === 2) {
     val = obj[key]
   }
 
+  // 让val被observe
   let childOb = !shallow && observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
@@ -160,7 +170,7 @@ export function defineReactive (
     get: function reactiveGetter () {
       const value = getter ? getter.call(obj) : val
       if (Dep.target) {
-        dep.depend()
+        dep.depend() //todo 添加依赖
         if (childOb) {
           childOb.dep.depend()
           if (Array.isArray(value)) {
@@ -182,13 +192,15 @@ export function defineReactive (
       }
       // #7981: for accessor properties without setter
       if (getter && !setter) return
+
+      // todo 设置值
       if (setter) {
         setter.call(obj, newVal)
       } else {
         val = newVal
       }
       childOb = !shallow && observe(newVal)
-      dep.notify()
+      dep.notify() //通知
     }
   })
 }

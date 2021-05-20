@@ -14,6 +14,7 @@ let uid = 0
  * and fires callback when the expression value changes.
  * This is used for both the $watch() api and directives.
  */
+// !订阅者模式
 export default class Watcher {
   vm: Component;
   expression: string;
@@ -41,10 +42,16 @@ export default class Watcher {
     isRenderWatcher?: boolean
   ) {
     this.vm = vm
+
+    // todo 渲染watcher就缓存this
     if (isRenderWatcher) {
       vm._watcher = this
     }
+    // todo 在所有的watcher中添加this
     vm._watchers.push(this)
+
+
+    // todo 获取传递的选项，没传递就全部置为false
     // options
     if (options) {
       this.deep = !!options.deep
@@ -55,22 +62,26 @@ export default class Watcher {
     } else {
       this.deep = this.user = this.lazy = this.sync = false
     }
+
+
     this.cb = cb
     this.id = ++uid // uid for batching
     this.active = true
-    this.dirty = this.lazy // for lazy watchers
-    this.deps = []
-    this.newDeps = []
-    this.depIds = new Set()
-    this.newDepIds = new Set()
-    this.expression = process.env.NODE_ENV !== 'production'
+    this.dirty = this.lazy // for lazy watchers 初始化computed dirty为true
+    this.deps = [] //旧的watch队列
+    this.newDeps = [] //新的watch队列
+    this.depIds = new Set() //旧的不重复的watch id
+    this.newDepIds = new Set() //新的不重复的watch id
+    this.expression = process.env.NODE_ENV !== 'production' //传递的getter函数解析字符串
       ? expOrFn.toString()
       : ''
-    // todo 将函数updateComponent赋值给getter parse expression for getter
+
+
+    // todo 将函数updateComponent赋值给 getter
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
     } else {
-      // todo 将表达式解析传递给getter 解析失败就报错
+      // todo 将表达式解析传递给getter，解析失败就置空、报错
       this.getter = parsePath(expOrFn)
       if (!this.getter) {
         this.getter = noop
@@ -82,6 +93,8 @@ export default class Watcher {
         )
       }
     }
+
+    // todo 获取value，如果是computed就是undefined ， 否则就执行get
     this.value = this.lazy ? undefined : this.get()
   }
 
@@ -93,7 +106,7 @@ export default class Watcher {
     let value
     const vm = this.vm
     try {
-      // todo 调用 updateComponent 方法
+      // todo 实际上是调用 updateComponent 方法,因为updateComponent 赋值给了 getter
       value = this.getter.call(vm, vm)
     } catch (e) {
       if (this.user) {
@@ -105,6 +118,7 @@ export default class Watcher {
       // "touch" every property so they are all tracked as
       // dependencies for deep watching
       if (this.deep) {
+        // todo 执行getter
         traverse(value)
       }
       popTarget()
@@ -119,9 +133,11 @@ export default class Watcher {
   addDep(dep: Dep) {
     const id = dep.id
     if (!this.newDepIds.has(id)) {
+      // todo 如果不存在就添加到这个set集合中
       this.newDepIds.add(id)
       this.newDeps.push(dep)
       if (!this.depIds.has(id)) {
+        // todo dep没有这个id就push进dep数组中
         dep.addSub(this)
       }
     }
