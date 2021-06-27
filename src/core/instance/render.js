@@ -1,137 +1,175 @@
 /* @flow */
 
-import {defineReactive, emptyObject, handleError, nextTick, warn} from '../util/index'
+import {
+  defineReactive,
+  emptyObject,
+  handleError,
+  nextTick,
+  warn
+} from "../util/index";
 
-import {createElement} from '../vdom/create-element'
-import {installRenderHelpers} from './render-helpers/index'
+import { createElement } from "../vdom/create-element";
+import { installRenderHelpers } from "./render-helpers/index";
 
-import {resolveSlots} from './render-helpers/resolve-slots'
-import {normalizeScopedSlots} from '../vdom/helpers/normalize-scoped-slots'
+import { resolveSlots } from "./render-helpers/resolve-slots";
+import { normalizeScopedSlots } from "../vdom/helpers/normalize-scoped-slots";
 
-import VNode, {createEmptyVNode} from '../vdom/vnode'
+import VNode, { createEmptyVNode } from "../vdom/vnode";
 
-import {isUpdatingChildComponent} from './lifecycle'
+import { isUpdatingChildComponent } from "./lifecycle";
 
-//!初始化render渲染
-//!1、置空_vnode、_staticTrees 缓存options、parentVnode、renderContext
-//!2、调用createElement函数
+/**
+ * @描述 初始化render函数所需要的变量及$createElement
+ * @作者 HY
+ * @时间 2021-06-27 17:00
+ */
 export function initRender(vm: Component) {
-  vm._vnode = null // todo 子树的根 the root of the child tree
-  vm._staticTrees = null //todo 缓存一次的树 v-once cached trees
+  vm._vnode = null;
+  vm._staticTrees = null;
+  const options = vm.$options;
+  const parentVnode = (vm.$vnode = options._parentVnode); // 父树中的占位符节点 the placeholder node in parent tree
+  // * 如果parentVnode存在就把parentVnode.context赋给变量，否则就把parentVnode赋给变量
+  const renderContext = parentVnode && parentVnode.context; //内容
+  const parentData = parentVnode && parentVnode.data;
 
-  const options = vm.$options
-  const parentVnode = vm.$vnode = options._parentVnode // 父树中的占位符节点 the placeholder node in parent tree
-  // todo 如果parentVnode存在就把parentVnode.context赋给变量，否则就把parentVnode赋给变量
-  const renderContext = parentVnode && parentVnode.context //内容
+  vm.$slots = resolveSlots(options._renderChildren, renderContext);
+  vm.$scopedSlots = emptyObject;
 
-  vm.$slots = resolveSlots(options._renderChildren, renderContext)
-  vm.$scopedSlots = emptyObject
+  // * 手写render渲染
+  vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false);
+  // * 组件渲染
+  vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true);
 
-  // bind the createElement fn to this instance
-  // so that we get proper render context inside it.
-  // args order: tag, data, children, normalizationType, alwaysNormalize
-  // internal version is used by render functions compiled from templates
-  // todo 无组件渲染
-  vm._c = (a, b, c, d) => createElement(vm, a, b, c, d, false)
-  // normalization is always applied for the public version, used in
-  // user-written render functions.
-  // todo 组件渲染
-  vm.$createElement = (a, b, c, d) => createElement(vm, a, b, c, d, true)
-
-  // $attrs & $listeners are exposed for easier HOC creation.
-  // they need to be reactive so that HOCs using them are always updated
-  const parentData = parentVnode && parentVnode.data
-
-  /* istanbul ignore else */
-  if (process.env.NODE_ENV !== 'production') {
-    defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, () => {
-      !isUpdatingChildComponent && warn(`$attrs is readonly.`, vm)
-    }, true)
-    defineReactive(vm, '$listeners', options._parentListeners || emptyObject, () => {
-      !isUpdatingChildComponent && warn(`$listeners is readonly.`, vm)
-    }, true)
+  // * 定义响应式$attrs、$listeners
+  if (process.env.NODE_ENV !== "production") {
+    defineReactive(
+      vm,
+      "$attrs",
+      (parentData && parentData.attrs) || emptyObject,
+      () => {
+        !isUpdatingChildComponent && warn(`$attrs is readonly.`, vm);
+      },
+      true
+    );
+    defineReactive(
+      vm,
+      "$listeners",
+      options._parentListeners || emptyObject,
+      () => {
+        !isUpdatingChildComponent && warn(`$listeners is readonly.`, vm);
+      },
+      true
+    );
   } else {
-    defineReactive(vm, '$attrs', parentData && parentData.attrs || emptyObject, null, true)
-    defineReactive(vm, '$listeners', options._parentListeners || emptyObject, null, true)
+    defineReactive(
+      vm,
+      "$attrs",
+      (parentData && parentData.attrs) || emptyObject,
+      null,
+      true
+    );
+    defineReactive(
+      vm,
+      "$listeners",
+      options._parentListeners || emptyObject,
+      null,
+      true
+    );
   }
 }
 
-export let currentRenderingInstance: Component | null = null
+export let currentRenderingInstance: Component | null = null;
 
-// for testing only
-export function setCurrentRenderingInstance(vm: Component) {
-  currentRenderingInstance = vm
-}
-
-
+/**
+ * @描述 执行挂载$nextTick、_render
+ * @作者 HY
+ * @时间 2021-06-27 16:48
+ */
 export function renderMixin(Vue: Class<Component>) {
   // install runtime convenience helpers
-  installRenderHelpers(Vue.prototype)
+  installRenderHelpers(Vue.prototype);
 
-  Vue.prototype.$nextTick = function (fn: Function) {
-    return nextTick(fn, this)
-  }
+  /**
+   * @描述 挂载$nextTick
+   * @作者 HY
+   * @时间 2021-06-27 17:02
+   */
+  Vue.prototype.$nextTick = function(fn: Function) {
+    return nextTick(fn, this);
+  };
 
-  //todo 挂载render函数
-  Vue.prototype._render = function (): VNode {
-    const vm: Component = this
-    const {render, _parentVnode} = vm.$options
-
+  /**
+   * @描述 用render函数执行$createElement
+   * @作者 HY
+   * @时间 2021-06-27 17:03
+   */
+  Vue.prototype._render = function(): VNode {
+    // * 声明
+    const vm: Component = this;
+    let vnode;
+    const { render, _parentVnode } = vm.$options; //_parentVnode 占位符vnode（例如h(App)）
     if (_parentVnode) {
-      vm.$scopedSlots = normalizeScopedSlots(_parentVnode.data.scopedSlots, vm.$slots, vm.$scopedSlots)
+      vm.$scopedSlots = normalizeScopedSlots(
+        _parentVnode.data.scopedSlots,
+        vm.$slots,
+        vm.$scopedSlots
+      );
     }
+    // 组件Vnode
+    vm.$vnode = _parentVnode; //占位符vnode（例如h(App)）
 
-    // 设置父vnode。这使渲染功能可以访问占位符节点上的数据
-    vm.$vnode = _parentVnode
-    // render self
-    let vnode
+    // * 调用编译或者手写的render函数执行$createElement渲染当前界面的vnode
+    // * 渲染出错就渲染错误界面，如果渲染错误界面出错就包警告，将渲染vode返回给vnode
+    // * 不管如何都将当前的渲染实例置空
     try {
-      // There's no need to maintain a stack because all render fns are called 无需维护堆栈，因为所有渲染fns均被调用
-      // separately from one another. Nested component's render fns are called 彼此分开。修补父组件时，将调用嵌套组件的渲染fns。
-      // when parent component is patched.
-      // todo 当前渲染实例
-      currentRenderingInstance = vm
-
-      // todo 调用$createElement
-      vnode = render.call(vm._renderProxy, vm.$createElement)
+      currentRenderingInstance = vm;
+      vnode = render.call(vm._renderProxy, vm.$createElement);
     } catch (e) {
-      handleError(e, vm, `render`)
-      // return error render result,
-      // or previous vnode to prevent render error causing blank component
-      // todo 返回错误，并渲染成界面，或返回先前的vnode以防止导致空白组件的渲染错误
-      if (process.env.NODE_ENV !== 'production' && vm.$options.renderError) {
+      handleError(e, vm, `render`);
+      if (process.env.NODE_ENV !== "production" && vm.$options.renderError) {
         try {
-          vnode = vm.$options.renderError.call(vm._renderProxy, vm.$createElement, e)
+          vnode = vm.$options.renderError.call(
+            vm._renderProxy,
+            vm.$createElement,
+            e
+          );
         } catch (e) {
-          handleError(e, vm, `renderError`)
-          vnode = vm._vnode
+          handleError(e, vm, `renderError`);
+          vnode = vm._vnode;
         }
       } else {
-        vnode = vm._vnode
+        vnode = vm._vnode;
       }
     } finally {
-      //todo 当前的渲染实例置空
-      currentRenderingInstance = null
+      currentRenderingInstance = null;
     }
-    // if the returned array contains only a single node, allow it 如果返回的数组仅包含一个节点，则允许它
+
+    // * 返回Vnode
     if (Array.isArray(vnode) && vnode.length === 1) {
-      vnode = vnode[0]
+      vnode = vnode[0];
     }
-    // 如果渲染函数出错，则返回空的vnode
+
+    // * 如果渲染的vnode不在Vnode原型上函数出错，则返回空的vnode
     if (!(vnode instanceof VNode)) {
-      if (process.env.NODE_ENV !== 'production' && Array.isArray(vnode)) {
+      if (process.env.NODE_ENV !== "production" && Array.isArray(vnode)) {
         warn(
           // 从渲染函数返回的多个根节点。渲染功能应该返回单个根节点。
-          'Multiple root nodes returned from render function. Render function ' +
-          'should return a single root node.',
+          "Multiple root nodes returned from render function. Render function " +
+            "should return a single root node.",
           vm
-        )
+        );
       }
-      // todo 则返回空的vnode
-      vnode = createEmptyVNode()
+      // * 则返回空的vnode
+      vnode = createEmptyVNode();
     }
-    //todo 将子组件设置为Vnode的父节点，以便后续渲染组件内部的内容
-    vnode.parent = _parentVnode
-    return vnode
-  }
+
+    //* 将渲染Vnode的parent设置占位符vnode
+    vnode.parent = _parentVnode;
+    return vnode;
+  };
+}
+
+// 仅供测试
+export function setCurrentRenderingInstance(vm: Component) {
+  currentRenderingInstance = vm;
 }

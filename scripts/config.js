@@ -24,12 +24,12 @@ const weexFactoryPlugin = {
   },
   outro() {
     return "}";
-  },
+  }
 };
 
-// todo 定义方法查找对应文件
+// * 定义方法查找对应文件
 const aliases = require("./alias");
-const resolve = (p) => {
+const resolve = p => {
   const base = p.split("/")[0];
   if (aliases[base]) {
     return path.resolve(aliases[base], p.slice(base.length + 1));
@@ -38,7 +38,7 @@ const resolve = (p) => {
   }
 };
 
-// todo 配置文件路径，相当于路由
+// * 配置文件路径，相当于路由
 const builds = {
   // Runtime only (CommonJS). Used by bundlers e.g. Webpack & Browserify
   "web-runtime-cjs-dev": {
@@ -46,14 +46,14 @@ const builds = {
     dest: resolve("dist/vue.runtime.common.dev.js"),
     format: "cjs",
     env: "development",
-    banner,
+    banner
   },
   "web-runtime-cjs-prod": {
     entry: resolve("web/entry-runtime.js"),
     dest: resolve("dist/vue.runtime.common.prod.js"),
     format: "cjs",
     env: "production",
-    banner,
+    banner
   },
   // Runtime+compiler CommonJS build (CommonJS)
   "web-full-cjs-dev": {
@@ -62,7 +62,7 @@ const builds = {
     format: "cjs",
     env: "development",
     alias: { he: "./entity-decoder" },
-    banner,
+    banner
   },
   "web-full-cjs-prod": {
     entry: resolve("web/entry-runtime-with-compiler.js"),
@@ -70,14 +70,14 @@ const builds = {
     format: "cjs",
     env: "production",
     alias: { he: "./entity-decoder" },
-    banner,
+    banner
   },
   // Runtime only ES modules build (for bundlers)
   "web-runtime-esm": {
     entry: resolve("web/entry-runtime.js"),
     dest: resolve("dist/vue.runtime.esm.js"),
     format: "es",
-    banner,
+    banner
   },
   // Runtime+compiler ES modules build (for bundlers)
   "web-full-esm": {
@@ -85,7 +85,7 @@ const builds = {
     dest: resolve("dist/vue.esm.js"),
     format: "es",
     alias: { he: "./entity-decoder" },
-    banner,
+    banner
   },
   // Runtime+compiler ES modules build (for direct import in browser)
   "web-full-esm-browser-dev": {
@@ -95,7 +95,7 @@ const builds = {
     transpile: false,
     env: "development",
     alias: { he: "./entity-decoder" },
-    banner,
+    banner
   },
   // Runtime+compiler ES modules build (for direct import in browser)
   "web-full-esm-browser-prod": {
@@ -105,7 +105,7 @@ const builds = {
     transpile: false,
     env: "production",
     alias: { he: "./entity-decoder" },
-    banner,
+    banner
   },
   // runtime-only build (Browser)
   "web-runtime-dev": {
@@ -113,7 +113,7 @@ const builds = {
     dest: resolve("dist/vue.runtime.js"),
     format: "umd",
     env: "development",
-    banner,
+    banner
   },
   // runtime-only production build (Browser)
   "web-runtime-prod": {
@@ -121,7 +121,7 @@ const builds = {
     dest: resolve("dist/vue.runtime.min.js"),
     format: "umd",
     env: "production",
-    banner,
+    banner
   },
   // Runtime+compiler development build (Browser)
   "web-full-dev": {
@@ -130,7 +130,7 @@ const builds = {
     format: "umd",
     env: "development",
     alias: { he: "./entity-decoder" },
-    banner,
+    banner
   },
   // Runtime+compiler production build  (Browser)
   "web-full-prod": {
@@ -139,7 +139,7 @@ const builds = {
     format: "umd",
     env: "production",
     alias: { he: "./entity-decoder" },
-    banner,
+    banner
   },
   // Web compiler (CommonJS).
   "web-compiler": {
@@ -148,7 +148,7 @@ const builds = {
     format: "cjs",
     external: Object.keys(
       require("../packages/vue-template-compiler/package.json").dependencies
-    ),
+    )
   },
   // Web compiler (UMD for in-browser use).
   "web-compiler-browser": {
@@ -157,7 +157,7 @@ const builds = {
     format: "umd",
     env: "development",
     moduleName: "VueTemplateCompiler",
-    plugins: [node(), cjs()],
+    plugins: [node(), cjs()]
   },
   // Web server renderer (CommonJS).
   "web-server-renderer-dev": {
@@ -167,7 +167,7 @@ const builds = {
     env: "development",
     external: Object.keys(
       require("../packages/vue-server-renderer/package.json").dependencies
-    ),
+    )
   },
   "web-server-renderer-prod": {
     entry: resolve("web/entry-server-renderer.js"),
@@ -176,7 +176,7 @@ const builds = {
     env: "production",
     external: Object.keys(
       require("../packages/vue-server-renderer/package.json").dependencies
-    ),
+    )
   },
   "web-server-renderer-basic": {
     entry: resolve("web/entry-server-basic-renderer.js"),
@@ -184,7 +184,7 @@ const builds = {
     format: "umd",
     env: "development",
     moduleName: "renderVueComponentToString",
-    plugins: [node(), cjs()],
+    plugins: [node(), cjs()]
   },
   "web-server-renderer-webpack-server-plugin": {
     entry: resolve("server/webpack-plugin/server.js"),
@@ -192,7 +192,7 @@ const builds = {
     format: "cjs",
     external: Object.keys(
       require("../packages/vue-server-renderer/package.json").dependencies
-    ),
+    )
   },
   "web-server-renderer-webpack-client-plugin": {
     entry: resolve("server/webpack-plugin/client.js"),
@@ -200,7 +200,7 @@ const builds = {
     format: "cjs",
     external: Object.keys(
       require("../packages/vue-server-renderer/package.json").dependencies
-    ),
+    )
   },
   // Weex runtime factory
   "weex-factory": {
@@ -208,14 +208,14 @@ const builds = {
     entry: resolve("weex/entry-runtime-factory.js"),
     dest: resolve("packages/weex-vue-framework/factory.js"),
     format: "cjs",
-    plugins: [weexFactoryPlugin],
+    plugins: [weexFactoryPlugin]
   },
   // Weex runtime framework (CommonJS).
   "weex-framework": {
     weex: true,
     entry: resolve("weex/entry-framework.js"),
     dest: resolve("packages/weex-vue-framework/index.js"),
-    format: "cjs",
+    format: "cjs"
   },
   // Weex compiler (CommonJS). Used by Weex's Webpack loader.
   "weex-compiler": {
@@ -225,8 +225,8 @@ const builds = {
     format: "cjs",
     external: Object.keys(
       require("../packages/weex-template-compiler/package.json").dependencies
-    ),
-  },
+    )
+  }
 };
 
 function genConfig(name) {
@@ -241,23 +241,23 @@ function genConfig(name) {
       file: opts.dest,
       format: opts.format,
       banner: opts.banner,
-      name: opts.moduleName || "Vue",
+      name: opts.moduleName || "Vue"
     },
     onwarn: (msg, warn) => {
       if (!/Circular/.test(msg)) {
         warn(msg);
       }
-    },
+    }
   };
 
   // built-in vars
   const vars = {
     __WEEX__: !!opts.weex,
     __WEEX_VERSION__: weexVersion,
-    __VERSION__: version,
+    __VERSION__: version
   };
   // feature flags
-  Object.keys(featureFlags).forEach((key) => {
+  Object.keys(featureFlags).forEach(key => {
     vars[`process.env.${key}`] = featureFlags[key];
   });
   // build-specific env
@@ -272,7 +272,7 @@ function genConfig(name) {
 
   Object.defineProperty(config, "_name", {
     enumerable: false,
-    value: name,
+    value: name
   });
 
   return config;

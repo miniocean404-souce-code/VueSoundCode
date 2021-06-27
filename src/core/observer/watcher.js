@@ -1,13 +1,21 @@
 /* @flow */
 
-import type {SimpleSet} from '../util/index'
-import {_Set as Set, handleError, isObject, noop, parsePath, remove, warn} from '../util/index'
+import type { SimpleSet } from "../util/index";
+import {
+  _Set as Set,
+  handleError,
+  isObject,
+  noop,
+  parsePath,
+  remove,
+  warn
+} from "../util/index";
 
-import {traverse} from './traverse'
-import {queueWatcher} from './scheduler'
-import Dep, {popTarget, pushTarget} from './dep'
+import { traverse } from "./traverse";
+import { queueWatcher } from "./scheduler";
+import Dep, { popTarget, pushTarget } from "./dep";
 
-let uid = 0
+let uid = 0;
 
 /**
  * A watcher parses an expression, collects dependencies,
@@ -41,104 +49,103 @@ export default class Watcher {
     options?: ?Object,
     isRenderWatcher?: boolean
   ) {
-    this.vm = vm
+    this.vm = vm;
 
-    // todo 渲染watcher就缓存this
+    // * 渲染watcher就缓存this
     if (isRenderWatcher) {
-      vm._watcher = this
+      vm._watcher = this;
     }
-    // todo 在所有的watcher中添加this
-    vm._watchers.push(this)
+    // * 在所有的watcher中添加this
+    vm._watchers.push(this);
 
-
-    // todo 获取传递的选项，没传递就全部置为false
+    // * 获取传递的选项，没传递就全部置为false
     // options
     if (options) {
-      this.deep = !!options.deep
-      this.user = !!options.user
-      this.lazy = !!options.lazy
-      this.sync = !!options.sync
-      this.before = options.before
+      this.deep = !!options.deep;
+      this.user = !!options.user;
+      this.lazy = !!options.lazy;
+      this.sync = !!options.sync;
+      this.before = options.before;
     } else {
-      this.deep = this.user = this.lazy = this.sync = false
+      this.deep = this.user = this.lazy = this.sync = false;
     }
 
+    this.cb = cb;
+    this.id = ++uid; // uid for batching
+    this.active = true;
+    this.dirty = this.lazy; // for lazy watchers 初始化computed dirty为true
+    this.deps = []; //旧的watch队列
+    this.newDeps = []; //新的watch队列
+    this.depIds = new Set(); //旧的不重复的watch id
+    this.newDepIds = new Set(); //新的不重复的watch id
+    this.expression =
+      process.env.NODE_ENV !== "production" //传递的getter函数解析字符串
+        ? expOrFn.toString()
+        : "";
 
-    this.cb = cb
-    this.id = ++uid // uid for batching
-    this.active = true
-    this.dirty = this.lazy // for lazy watchers 初始化computed dirty为true
-    this.deps = [] //旧的watch队列
-    this.newDeps = [] //新的watch队列
-    this.depIds = new Set() //旧的不重复的watch id
-    this.newDepIds = new Set() //新的不重复的watch id
-    this.expression = process.env.NODE_ENV !== 'production' //传递的getter函数解析字符串
-      ? expOrFn.toString()
-      : ''
-
-
-    // todo 将函数updateComponent赋值给 getter
-    if (typeof expOrFn === 'function') {
-      this.getter = expOrFn
+    // * 将函数updateComponent赋值给 getter
+    if (typeof expOrFn === "function") {
+      this.getter = expOrFn;
     } else {
-      // todo 将表达式解析传递给getter，解析失败就置空、报错
-      this.getter = parsePath(expOrFn)
+      // * 将表达式解析传递给getter，解析失败就置空、报错
+      this.getter = parsePath(expOrFn);
       if (!this.getter) {
-        this.getter = noop
-        process.env.NODE_ENV !== 'production' && warn(
-          `Failed watching path: "${expOrFn}" ` +
-          'Watcher only accepts simple dot-delimited paths. ' +
-          'For full control, use a function instead.',
-          vm
-        )
+        this.getter = noop;
+        process.env.NODE_ENV !== "production" &&
+          warn(
+            `Failed watching path: "${expOrFn}" ` +
+              "Watcher only accepts simple dot-delimited paths. " +
+              "For full control, use a function instead.",
+            vm
+          );
       }
     }
 
-    // todo 获取value，如果是computed就是undefined ， 否则就执行get
-    this.value = this.lazy ? undefined : this.get()
+    // * 获取value，如果是computed就是undefined ， 否则就执行get
+    this.value = this.lazy ? undefined : this.get();
   }
 
   /**
    * Evaluate the getter, and re-collect dependencies.
    */
   get() {
-    pushTarget(this)
-    let value
-    const vm = this.vm
+    pushTarget(this);
+    let value;
+    const vm = this.vm;
     try {
-      // todo 实际上是调用 updateComponent 方法,因为updateComponent 赋值给了 getter
-      value = this.getter.call(vm, vm)
+      // * 实际上是调用 updateComponent 方法,因为updateComponent 赋值给了 getter
+      value = this.getter.call(vm, vm);
     } catch (e) {
       if (this.user) {
-        handleError(e, vm, `getter for watcher "${this.expression}"`)
+        handleError(e, vm, `getter for watcher "${this.expression}"`);
       } else {
-        throw e
+        throw e;
       }
     } finally {
       // "touch" every property so they are all tracked as
       // dependencies for deep watching
       if (this.deep) {
-        // todo 执行getter
-        traverse(value)
+        // * 执行getter
+        traverse(value);
       }
-      popTarget()
-      this.cleanupDeps()
+      popTarget();
+      this.cleanupDeps();
     }
-    return value
+    return value;
   }
 
   /**
    * Add a dependency to this directive.
    */
   addDep(dep: Dep) {
-    const id = dep.id
+    const id = dep.id;
     if (!this.newDepIds.has(id)) {
-      // todo 如果不存在就添加到这个set集合中
-      this.newDepIds.add(id)
-      this.newDeps.push(dep)
+      // * 如果不存在就添加到这个set集合中
+      this.newDepIds.add(id);
+      this.newDeps.push(dep);
       if (!this.depIds.has(id)) {
-        // todo dep没有这个id就push进dep数组中
-        dep.addSub(this)
+        // * dep没有这个id就push进dep数组中
+        dep.addSub(this);
       }
     }
   }
@@ -147,21 +154,21 @@ export default class Watcher {
    * Clean up for dependency collection.
    */
   cleanupDeps() {
-    let i = this.deps.length
+    let i = this.deps.length;
     while (i--) {
-      const dep = this.deps[i]
+      const dep = this.deps[i];
       if (!this.newDepIds.has(dep.id)) {
-        dep.removeSub(this)
+        dep.removeSub(this);
       }
     }
-    let tmp = this.depIds
-    this.depIds = this.newDepIds
-    this.newDepIds = tmp
-    this.newDepIds.clear()
-    tmp = this.deps
-    this.deps = this.newDeps
-    this.newDeps = tmp
-    this.newDeps.length = 0
+    let tmp = this.depIds;
+    this.depIds = this.newDepIds;
+    this.newDepIds = tmp;
+    this.newDepIds.clear();
+    tmp = this.deps;
+    this.deps = this.newDeps;
+    this.newDeps = tmp;
+    this.newDeps.length = 0;
   }
 
   /**
@@ -171,11 +178,11 @@ export default class Watcher {
   update() {
     /* istanbul ignore else */
     if (this.lazy) {
-      this.dirty = true
+      this.dirty = true;
     } else if (this.sync) {
-      this.run()
+      this.run();
     } else {
-      queueWatcher(this)
+      queueWatcher(this);
     }
   }
 
@@ -185,7 +192,7 @@ export default class Watcher {
    */
   run() {
     if (this.active) {
-      const value = this.get()
+      const value = this.get();
       if (
         value !== this.value ||
         // Deep watchers and watchers on Object/Arrays should fire even
@@ -195,16 +202,20 @@ export default class Watcher {
         this.deep
       ) {
         // set new value
-        const oldValue = this.value
-        this.value = value
+        const oldValue = this.value;
+        this.value = value;
         if (this.user) {
           try {
-            this.cb.call(this.vm, value, oldValue)
+            this.cb.call(this.vm, value, oldValue);
           } catch (e) {
-            handleError(e, this.vm, `callback for watcher "${this.expression}"`)
+            handleError(
+              e,
+              this.vm,
+              `callback for watcher "${this.expression}"`
+            );
           }
         } else {
-          this.cb.call(this.vm, value, oldValue)
+          this.cb.call(this.vm, value, oldValue);
         }
       }
     }
@@ -215,17 +226,17 @@ export default class Watcher {
    * This only gets called for lazy watchers.
    */
   evaluate() {
-    this.value = this.get()
-    this.dirty = false
+    this.value = this.get();
+    this.dirty = false;
   }
 
   /**
    * Depend on all deps collected by this watcher.
    */
   depend() {
-    let i = this.deps.length
+    let i = this.deps.length;
     while (i--) {
-      this.deps[i].depend()
+      this.deps[i].depend();
     }
   }
 
@@ -238,13 +249,13 @@ export default class Watcher {
       // this is a somewhat expensive operation so we skip it
       // if the vm is being destroyed.
       if (!this.vm._isBeingDestroyed) {
-        remove(this.vm._watchers, this)
+        remove(this.vm._watchers, this);
       }
-      let i = this.deps.length
+      let i = this.deps.length;
       while (i--) {
-        this.deps[i].removeSub(this)
+        this.deps[i].removeSub(this);
       }
-      this.active = false
+      this.active = false;
     }
   }
 }

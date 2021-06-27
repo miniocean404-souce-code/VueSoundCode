@@ -1,147 +1,154 @@
 /* @flow */
-import config from '../config'
-import {initProxy} from './proxy'
-import {initState} from './state'
-import {initRender} from './render'
-import {initEvents} from './events'
-import {mark, measure} from '../util/perf'
-import {callHook, initLifecycle} from './lifecycle'
-import {initInjections, initProvide} from './inject'
-import {extend, formatComponentName, mergeOptions} from '../util/index'
+import config from "../config";
+import { initProxy } from "./proxy";
+import { initState } from "./state";
+import { initRender } from "./render";
+import { initEvents } from "./events";
+import { mark, measure } from "../util/perf";
+import { callHook, initLifecycle } from "./lifecycle";
+import { initInjections, initProvide } from "./inject";
+import { extend, formatComponentName, mergeOptions } from "../util/index";
 
-let uid = 0
+let uid = 0;
 
+/**
+ * @描述 集中初始化各个钩子，合并配置
+ * @作者 HY
+ * @时间 2021-06-27 14:20
+ */
 export function initMixin(Vue: Class<Component>) {
+  Vue.prototype._init = function(options?: Object) {
+    //* 定义Vm
+    //* 挂载_uid，每次初始化都让id++
+    //* _isVue避免被观察到的标志
+    const vm: Component = this;
+    vm._uid = uid++;
+    vm._isVue = true;
 
-  //!初始化(new Vue 以及 组件的初始化)
-  //!1、合并选项
-  //!2、初始化声明周期、事件、render函数、beforeCreate钩子、inject，Provide函数、state
-  //!3、$mount挂载
-  Vue.prototype._init = function (options?: Object) {
-    const vm: Component = this
-    // todo 每一个Vue有一个唯一的UID
-    vm._uid = uid++
-
-    let startTag, endTag
-    /* istanbul ignore if */
-    if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
-      startTag = `vue-perf-start:${vm._uid}`
-      endTag = `vue-perf-end:${vm._uid}`
-      mark(startTag)
+    // 性能优化钩子
+    let startTag, endTag;
+    if (process.env.NODE_ENV !== "production" && config.performance && mark) {
+      startTag = `vue-perf-start:${vm._uid}`;
+      endTag = `vue-perf-end:${vm._uid}`;
+      mark(startTag);
     }
 
-    // 避免被观察到的标志
-    vm._isVue = true
-
-
-    // todo 如果是组件就合并组件否则就讲new Vue的选项进行合并 来自组件patch中递归调用，利用vnode进行创建子组件，并对其初始化
+    // * 是组件，初始化组件、
+    // * 不是 普通节点合并options
     if (options && options._isComponent) {
-      // 优化内部组件实例化，因为动态选项合并非常慢，并且没有内部组件选项需要特殊处理。
-      // todo 初始化内部组件
-      initInternalComponent(vm, options)
+      initInternalComponent(vm, options);
     } else {
-      vm.$options = mergeOptions(resolveConstructorOptions(vm.constructor), options || {}, vm)
+      vm.$options = mergeOptions(
+        resolveConstructorOptions(vm.constructor), //大vue的option
+        options || {}, //new Vue 的options
+        vm
+      );
     }
 
-    // 产生代理
-    if (process.env.NODE_ENV !== 'production') {
-      // todo 生成一个Vm代理
-      initProxy(vm)
+    // * 支持Proxy就使用代理否则vm._renderProxy = vm
+    if (process.env.NODE_ENV !== "production") {
+      initProxy(vm);
     } else {
-      vm._renderProxy = vm
+      vm._renderProxy = vm;
     }
 
-    // expose real self
-    // todo 初始化声明周期、事件、render函数、beforeCreate钩子、inject，Provide函数、state
-    vm._self = vm  //* 循环挂载
-    initLifecycle(vm)
-    initEvents(vm)
-    initRender(vm)
-    callHook(vm, 'beforeCreate')
-    initInjections(vm) // resolve injections before data/props
-    // todo 初始化data和props等
-    initState(vm)
-    initProvide(vm) // resolve provide after data/props
-    callHook(vm, 'created')
+    vm._self = vm; //* 循环挂载
 
-    /* istanbul ignore if */
-    if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
-      vm._name = formatComponentName(vm, false)
-      mark(endTag)
-      measure(`vue ${vm._name} init`, startTag, endTag)
+    // * 初始化声明周期、事件、render函数
+    initLifecycle(vm);
+    initEvents(vm);
+    initRender(vm);
+    callHook(vm, "beforeCreate");
+
+    //* 初始化注入提供钩子、初始化数据
+    initInjections(vm);
+    initState(vm);
+    initProvide(vm);
+    callHook(vm, "created");
+
+    if (process.env.NODE_ENV !== "production" && config.performance && mark) {
+      vm._name = formatComponentName(vm, false);
+      mark(endTag);
+      measure(`vue ${vm._name} init`, startTag, endTag);
     }
 
-    // todo 如果有el就通过el进行挂载
+    //* 如果有el就通过el进行挂载
     if (vm.$options.el) {
-      vm.$mount(vm.$options.el)
+      vm.$mount(vm.$options.el);
     }
-  }
+  };
 }
 
-// !初始化组件内部组件
-// !1、克隆一份原型链上的Vue option给当前组件构造函数的对象、父组件给parent、父Vnode实例给_parentVnode
-// !2、父Vnode的组件选项给当前的Vue实例
-// !3、当前render存在就赋值给当前的Vue
-export function initInternalComponent(vm: Component, options: InternalComponentOptions) {
-  const opts = vm.$options = Object.create(vm.constructor.options)
-  // doing this because it's faster than dynamic enumeration. 这样做是因为它比动态枚举要快。
-  //todo _parentVnode 正在实例化组件的父Vnode
-  const parentVnode = options._parentVnode
-  //todo 父Vnode的真实DOM
-  opts.parent = options.parent
-  // todo 正在实例化子组件的_parentVnode添加他的父Vnode
-  opts._parentVnode = parentVnode
+/**
+ * @描述 初始化内部组件，在当前组件中合并父占位符vnode的一些属性（这种合并是因为它比动态枚举要快。）
+ * @作者 HY
+ * @时间 2021-06-27 14:22
+ */
+export function initInternalComponent(
+  vm: Component,
+  options: InternalComponentOptions
+) {
+  //* 声明 占位符vnode，子的在extend中合并好的options
+  const parentVnode = options._parentVnode;
+  const opts = (vm.$options = Object.create(vm.constructor.options));
 
+  //* vm.$options中挂载父Vue实例和父Vnode
+  opts._parentVnode = parentVnode;
+  opts.parent = options.parent; // 子组件的父vue实例
 
-  //todo 赋值父的数据给构造函数opts
-  const vnodeComponentOptions = parentVnode.componentOptions
-  opts.propsData = vnodeComponentOptions.propsData
-  opts._parentListeners = vnodeComponentOptions.listeners
-  opts._renderChildren = vnodeComponentOptions.children
-  opts._componentTag = vnodeComponentOptions.tag
+  //* 将占位符Vnode的组件选项赋值给当前子Vm实例
+  const vnodeComponentOptions = parentVnode.componentOptions;
+  opts.propsData = vnodeComponentOptions.propsData;
+  opts._parentListeners = vnodeComponentOptions.listeners;
+  opts._renderChildren = vnodeComponentOptions.children;
+  opts._componentTag = vnodeComponentOptions.tag;
 
-  // todo 当组件中递归渲染时候是没有render函数
+  // * 这时候还没有编译render函数，查看用户是否自己手写了render函数
   if (options.render) {
-    opts.render = options.render
-    opts.staticRenderFns = options.staticRenderFns
+    opts.render = options.render;
+    opts.staticRenderFns = options.staticRenderFns;
   }
 }
 
-// ? 解析构造函数选项
+/**
+ * @描述 解析构造函数中的option，并返回
+ * @作者 HY
+ * @时间 2021-06-27 16:15
+ */
 export function resolveConstructorOptions(Ctor: Class<Component>) {
-  let options = Ctor.options
+  let options = Ctor.options;
   if (Ctor.super) {
-    const superOptions = resolveConstructorOptions(Ctor.super)
-    const cachedSuperOptions = Ctor.superOptions
+    const superOptions = resolveConstructorOptions(Ctor.super);
+    const cachedSuperOptions = Ctor.superOptions;
     if (superOptions !== cachedSuperOptions) {
       // super option changed,
       // need to resolve new options.
-      Ctor.superOptions = superOptions
+      Ctor.superOptions = superOptions;
       // check if there are any late-modified/attached options (#4976)
-      const modifiedOptions = resolveModifiedOptions(Ctor)
+      const modifiedOptions = resolveModifiedOptions(Ctor);
       // update base extend options
       if (modifiedOptions) {
-        extend(Ctor.extendOptions, modifiedOptions)
+        extend(Ctor.extendOptions, modifiedOptions);
       }
-      options = Ctor.options = mergeOptions(superOptions, Ctor.extendOptions)
+      options = Ctor.options = mergeOptions(superOptions, Ctor.extendOptions);
       if (options.name) {
-        options.components[options.name] = Ctor
+        options.components[options.name] = Ctor;
       }
     }
   }
-  return options
+  return options;
 }
 
-// ? 解决修改的选项
+//解决修改的选项
 function resolveModifiedOptions(Ctor: Class<Component>): ?Object {
-  let modified
-  const latest = Ctor.options
-  const sealed = Ctor.sealedOptions
+  let modified;
+  const latest = Ctor.options;
+  const sealed = Ctor.sealedOptions;
   for (const key in latest) {
     if (latest[key] !== sealed[key]) {
-      if (!modified) modified = {}
-      modified[key] = latest[key]
+      if (!modified) modified = {};
+      modified[key] = latest[key];
     }
   }
-  return modified
+  return modified;
 }

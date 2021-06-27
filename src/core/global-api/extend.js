@@ -1,104 +1,94 @@
 /* @flow */
 
-import {ASSET_TYPES} from 'shared/constants'
-import {defineComputed, proxy} from '../instance/state'
-import {extend, mergeOptions, validateComponentName} from '../util/index'
+import { ASSET_TYPES } from "shared/constants";
+import { defineComputed, proxy } from "../instance/state";
+import { extend, mergeOptions, validateComponentName } from "../util/index";
 
+/**
+ * @描述 继承大Vue组件，缓存继承的响应对象（下次可直接返回）
+ * @作者 HY
+ * @时间 2021-06-27 19:56
+ */
 export function initExtend(Vue: GlobalAPI) {
-  /**
-   * Each instance constructor, including Vue, has a unique
-   * cid. This enables us to create wrapped "child
-   * constructors" for prototypal inheritance and cache them.
-   */
-  Vue.cid = 0
-  let cid = 1
+  // 每个实例构造函数，包括 Vue，都有一个唯一的 cid。这使我们能够为原型继承创建包装的“子构造函数”并缓存它们。
+  Vue.cid = 0;
+  let cid = 1;
 
-  /**
-   * Class inheritance
-   */
-  Vue.extend = function (extendOptions: Object): Function {
-    extendOptions = extendOptions || {}
+  Vue.extend = function(extendOptions: Object): Function {
+    //例如（render(APP)）
+    extendOptions = extendOptions || {};
 
-    const Super = this
-    const SuperId = Super.cid
-    const cachedCtors = extendOptions._Ctor || (extendOptions._Ctor = {})
-
+    // * 获取父id和父this，定义缓存构造函数，如果有就直接返回
+    const Super = this;
+    const SuperId = Super.cid;
+    const cachedCtors = extendOptions._Ctor || (extendOptions._Ctor = {});
     if (cachedCtors[SuperId]) {
-      return cachedCtors[SuperId]
+      return cachedCtors[SuperId];
     }
 
-    // todo 获取构造器的name或者当前Vue的name
-    const name = extendOptions.name || Super.options.name
-
-    // todo 检查组件命名
-    if (process.env.NODE_ENV !== 'production' && name) {
-      validateComponentName(name)
+    // * 获取组件的name,或者用父的name、检查组件命名规范
+    const name = extendOptions.name || Super.options.name;
+    if (process.env.NODE_ENV !== "production" && name) {
+      validateComponentName(name);
     }
 
-    // todo 初始化组件
+    // * 定义子组件
     const Sub = function VueComponent(options) {
-      this._init(options)
+      this._init(options);
+    };
+
+    // * 父类原型赋给子原型，子构造函数原型赋值为子（将父的原型上的东西继承下来）、将组件的option和父的option进行合并
+    Sub.prototype = Object.create(Super.prototype);
+    Sub.prototype.constructor = Sub;
+    Sub.cid = cid++;
+    Sub.options = mergeOptions(Super.options, extendOptions); // * 将大Vue的options与子的options调用mergeOptions的合并策略进行合并
+    Sub["super"] = Super; //子中定义一个父的钩子函数指向
+
+    // * 在子对象上继续可以使用extend、mixin、use
+    Sub.extend = Super.extend;
+    Sub.mixin = Super.mixin;
+    Sub.use = Super.use;
+
+    // * 将component、directive、filter继承在子
+    ASSET_TYPES.forEach(function(type) {
+      Sub[type] = Super[type];
+    });
+
+    // * 在自己的options.components指向一个自己
+    if (name) {
+      Sub.options.components[name] = Sub;
     }
 
-    // todo 父类原型赋给子原型，子构造函数原型赋值为子
-    Sub.prototype = Object.create(Super.prototype)
-    Sub.prototype.constructor = Sub
-    Sub.cid = cid++
-    Sub.options = mergeOptions(
-      Super.options,
-      extendOptions
-    )
-    Sub['super'] = Super
+    // * 在扩展时保留对父选项的引用。稍后在实例化时，我们可以检查 Super 的选项是否已更新。
+    Sub.superOptions = Super.options;
+    Sub.extendOptions = extendOptions;
+    Sub.sealedOptions = extend({}, Sub.options);
 
-    // For props and computed properties, we define the proxy getters on   对于props和计算属性，我们在扩展原型的扩展时间在Vue实例上定义代理获取器。
-    // the Vue instances at extension time, on the extended prototype. This 这样可以避免为每个创建的实例调用Object.defineProperty。
-    // avoids Object.defineProperty calls for each instance created.
+    // 对于 props 和计算属性，我们定义了代理 getter
+    // 扩展时的 Vue 实例，在扩展原型上. This 这样可以避免为每个创建的实例调用Object.defineProperty。
     if (Sub.options.props) {
-      initProps(Sub)
+      initProps(Sub);
     }
     if (Sub.options.computed) {
-      initComputed(Sub)
+      initComputed(Sub);
     }
 
-    // allow further extension/mixin/plugin usage
-    Sub.extend = Super.extend
-    Sub.mixin = Super.mixin
-    Sub.use = Super.use
-
-    // create asset registers, so extended classes
-    // can have their private assets too.
-    // todo 注册资产以便后续使用 component directive filter
-    ASSET_TYPES.forEach(function (type) {
-      Sub[type] = Super[type]
-    })
-    // 启用递归自查找 enable recursive self-lookup
-    if (name) {
-      Sub.options.components[name] = Sub
-    }
-
-    // 在扩展时间保留对超级选项的引用。稍后在实例化中，我们可以检查Super的选项是否已更新 keep a reference to the super options at extension time.
-    // later at instantiation we can check if Super's options have
-    // been updated.
-    Sub.superOptions = Super.options
-    Sub.extendOptions = extendOptions
-    Sub.sealedOptions = extend({}, Sub.options)
-
-    // cache constructor
-    cachedCtors[SuperId] = Sub
-    return Sub
-  }
+    // * 缓存当前子的构造函数，只要有就添加到cachedCtors进行缓存
+    cachedCtors[SuperId] = Sub;
+    return Sub;
+  };
 }
 
 function initProps(Comp) {
-  const props = Comp.options.props
+  const props = Comp.options.props;
   for (const key in props) {
-    proxy(Comp.prototype, `_props`, key)
+    proxy(Comp.prototype, `_props`, key);
   }
 }
 
 function initComputed(Comp) {
-  const computed = Comp.options.computed
+  const computed = Comp.options.computed;
   for (const key in computed) {
-    defineComputed(Comp.prototype, key, computed[key])
+    defineComputed(Comp.prototype, key, computed[key]);
   }
 }
