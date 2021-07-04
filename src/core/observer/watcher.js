@@ -140,11 +140,11 @@ export default class Watcher {
   addDep(dep: Dep) {
     const id = dep.id;
     if (!this.newDepIds.has(id)) {
-      // * 如果不存在就添加到这个set集合中
+      // * 如果不存在就添加到这个set id集合中，添加到newDeps对象中
       this.newDepIds.add(id);
       this.newDeps.push(dep);
       if (!this.depIds.has(id)) {
-        // * dep没有这个id就push进dep数组中
+        // * depIds没有这个id就push进dep数组中
         dep.addSub(this);
       }
     }

@@ -116,6 +116,11 @@ function initProps(vm: Component, propsOptions: Object) {
   toggleObserving(true);
 }
 
+/**
+ * @描述 讲option中data设置到_data中，并且检测是否有重名，最后将其设置为响应式
+ * @作者 HY
+ * @时间 2021-07-04 15:11
+ */
 function initData(vm: Component) {
   let data = vm.$options.data;
   // * 真正访问的是_data
