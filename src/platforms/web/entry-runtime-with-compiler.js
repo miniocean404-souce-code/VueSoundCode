@@ -108,6 +108,7 @@ Vue.prototype.$mount = function(
         },
         this
       );
+
       options.render = render;
       options.staticRenderFns = staticRenderFns;
 

@@ -106,7 +106,9 @@ export default class Watcher {
   }
 
   /**
-   * Evaluate the getter, and re-collect dependencies.
+   * @描述 压栈，获取updateComponent的值触发setter函数，并返回
+   * @作者 HY
+   * @时间 2021-07-04 17:10
    */
   get() {
     pushTarget(this);
@@ -135,7 +137,9 @@ export default class Watcher {
   }
 
   /**
-   * Add a dependency to this directive.
+   * @描述 添加依赖项
+   * @作者 HY
+   * @时间 2021-07-04 16:31
    */
   addDep(dep: Dep) {
     const id = dep.id;
@@ -147,6 +151,22 @@ export default class Watcher {
         // * depIds没有这个id就push进dep数组中
         dep.addSub(this);
       }
+    }
+  }
+
+  /**
+   * Subscriber interface.
+   * Will be called when a dependency changes.
+   */
+  update() {
+    /* istanbul ignore else */
+    if (this.lazy) {
+      this.dirty = true;
+    } else if (this.sync) {
+      this.run();
+    } else {
+      // *
+      queueWatcher(this);
     }
   }
 
@@ -172,38 +192,24 @@ export default class Watcher {
   }
 
   /**
-   * Subscriber interface.
-   * Will be called when a dependency changes.
-   */
-  update() {
-    /* istanbul ignore else */
-    if (this.lazy) {
-      this.dirty = true;
-    } else if (this.sync) {
-      this.run();
-    } else {
-      queueWatcher(this);
-    }
-  }
-
-  /**
-   * Scheduler job interface.
-   * Will be called by the scheduler.
+   * @描述 调用run让返回watch的值
+   * @作者 HY
+   * @时间 2021-07-04 16:47
    */
   run() {
     if (this.active) {
+      // * 通过updateComponent获取更新的value
       const value = this.get();
       if (
         value !== this.value ||
-        // Deep watchers and watchers on Object/Arrays should fire even
-        // when the value is the same, because the value may
-        // have mutated.
+        // * 即使值相同，深度观察者和 Object/Arrays 上的观察者也应该触发，因为该值可能已经发生了变化。
         isObject(value) ||
         this.deep
       ) {
-        // set new value
         const oldValue = this.value;
         this.value = value;
+
+        // * user是用户手写的watch标志
         if (this.user) {
           try {
             this.cb.call(this.vm, value, oldValue);

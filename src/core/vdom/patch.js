@@ -20,6 +20,11 @@ export const emptyNode = new VNode("", {}, []);
 
 const hooks = ["create", "activate", "update", "remove", "destroy"];
 
+/**
+ * @描述 key、tag、data,等相同就是同一节点
+ * @作者 HY
+ * @时间 2021-07-04 19:37
+ */
 function sameVnode(a, b) {
   return (
     a.key === b.key &&
@@ -33,13 +38,20 @@ function sameVnode(a, b) {
   );
 }
 
+/**
+ * @描述 是否是相同的输入类型的节点
+ * @作者 HY
+ * @时间 2021-07-04 19:42
+ */
 function sameInputType(a, b) {
   if (a.tag !== "input") return true;
   let i;
+  // * 两个节点的类型相等，或者两个是文本输入节点（text,number,password,search,email,tel,url）
   const typeA = isDef((i = a.data)) && isDef((i = i.attrs)) && i.type;
   const typeB = isDef((i = b.data)) && isDef((i = i.attrs)) && i.type;
   return typeA === typeB || (isTextInputType(typeA) && isTextInputType(typeB));
 }
+
 
 function createKeyToOldIdx(children, beginIdx, endIdx) {
   let i, key;
@@ -353,6 +365,11 @@ export function createPatchFunction(backend) {
     }
   }
 
+  /**
+   * @描述 返回是否是个可挂载节点、如果是个组件vnode就等于渲染虚拟dom，并将其是否定义tag标签返回
+   * @作者 HY
+   * @时间 2021-07-04 19:56
+   */
   function isPatchable(vnode) {
     while (vnode.componentInstance) {
       vnode = vnode.componentInstance._vnode;
@@ -665,6 +682,7 @@ export function createPatchFunction(backend) {
     index,
     removeOnly
   ) {
+    // * 如果是同一个对象就返回
     if (oldVnode === vnode) {
       return;
     }
@@ -699,18 +717,21 @@ export function createPatchFunction(backend) {
       return;
     }
 
+    // * 如果是个组件vnode就并且有prepatch函数就执行这个函数
     let i;
     const data = vnode.data;
     if (isDef(data) && isDef((i = data.hook)) && isDef((i = i.prepatch))) {
       i(oldVnode, vnode);
     }
 
+    // * 执行 update 钩子函数
     const oldCh = oldVnode.children;
     const ch = vnode.children;
     if (isDef(data) && isPatchable(vnode)) {
       for (i = 0; i < cbs.update.length; ++i) cbs.update[i](oldVnode, vnode);
       if (isDef((i = data.hook)) && isDef((i = i.update))) i(oldVnode, vnode);
     }
+
     if (isUndef(vnode.text)) {
       if (isDef(oldCh) && isDef(ch)) {
         if (oldCh !== ch)
@@ -729,6 +750,7 @@ export function createPatchFunction(backend) {
     } else if (oldVnode.text !== vnode.text) {
       nodeOps.setTextContent(elm, vnode.text);
     }
+
     if (isDef(data)) {
       if (isDef((i = data.hook)) && isDef((i = i.postpatch)))
         i(oldVnode, vnode);
@@ -897,13 +919,12 @@ export function createPatchFunction(backend) {
       isInitialPatch = true;
       createElm(vnode, insertedVnodeQueue);
     } else {
-      // * 如果是不是真实的DOM
+      // ! 如果是不是真实的DOM，并且节点相同
       const isRealElement = isDef(oldVnode.nodeType);
       if (!isRealElement && sameVnode(oldVnode, vnode)) {
-        // * 利用diff算法修补节点
+        // * 节点相同，利用diff算法修补节点
         patchVnode(oldVnode, vnode, insertedVnodeQueue, null, null, removeOnly);
       } else {
-        // * 如果是个真实DOM (手写render、template)
         if (isRealElement) {
           // 挂载到真实元素
           // 检查这是否是服务器渲染的内容以及我们是否可以执行一个成功的hydration
@@ -930,10 +951,12 @@ export function createPatchFunction(backend) {
           // * 不是服务端渲染，创建一个空节点并替换它
           oldVnode = emptyNodeAt(oldVnode);
         }
+
+        // ! 如果新旧节点不同，或者是个真实DOM（手写render、template）
         const oldElm = oldVnode.elm; //  空VNNode的真实节点
         const parentElm = nodeOps.parentNode(oldElm); //  找到这个空VNode的父真实节点
 
-        //!创建node节点
+        //!创建真实node节点
         createElm(
           vnode,
           insertedVnodeQueue,
@@ -949,10 +972,13 @@ export function createPatchFunction(backend) {
           let ancestor = vnode.parent;
           const patchable = isPatchable(vnode);
           while (ancestor) {
+            // * 调用组件钩子中的销毁钩子，销毁完后将真实DOM赋值给祖先节点的真实元素
             for (let i = 0; i < cbs.destroy.length; ++i) {
               cbs.destroy[i](ancestor);
             }
             ancestor.elm = vnode.elm;
+
+            // * 创建新节点并且插入
             if (patchable) {
               for (let i = 0; i < cbs.create.length; ++i) {
                 cbs.create[i](emptyNode, ancestor);
@@ -974,7 +1000,7 @@ export function createPatchFunction(backend) {
           }
         }
 
-        // * 如果有父元素就移除那个元素，否则就销毁旧DOM
+        // * 如果有就节点父元素就移除那个元素，否则就销毁旧DOM
         if (isDef(parentElm)) {
           removeVnodes([oldVnode], 0, 0);
         } else if (isDef(oldVnode.tag)) {

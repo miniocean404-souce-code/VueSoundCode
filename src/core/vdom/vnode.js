@@ -1,28 +1,29 @@
 /* @flow */
 
 export default class VNode {
-  tag: string | void;
-  data: VNodeData | void;
-  children: ?Array<VNode>;
-  text: string | void;
-  elm: Node | void;
-  ns: string | void;
-  context: Component | void; // rendered in this component's scope
-  key: string | number | void;
-  componentOptions: VNodeComponentOptions | void;
+  // 节点的内容
+  tag: string | void; // 标签
+  data: VNodeData | void; // 被绑定在虚拟dom上面的监听的事件、attr、slot、staticStyle样式
+  children: ?Array<VNode>; // 虚拟DOM的子节点
+  text: string | void; //节点文本
+  elm: Node | void; // 节点真实元素
+  ns: string | void; // 节点命名空间
+  context: Component | void; // 渲染这个组件的上下文
+  key: string | number | void; // key
+  componentOptions: VNodeComponentOptions | void; // 组件的属性列表对象
   componentInstance: Component | void; // component instance
-  parent: VNode | void; // component placeholder node
+  parent: VNode | void; // 组件占位符Vnode，当前将要转化为真实DOM的父Vnode
 
-  // strictly internal
-  raw: boolean; // contains raw HTML? (server only)
-  isStatic: boolean; // hoisted static node
-  isRootInsert: boolean; // necessary for enter transition check
-  isComment: boolean; // empty comment placeholder?
-  isCloned: boolean; // is a cloned node?
-  isOnce: boolean; // is a v-once node?
-  asyncFactory: Function | void; // async component factory function
-  asyncMeta: Object | void;
-  isAsyncPlaceholder: boolean;
+  // 状态
+  raw: boolean; // 是否包含原始HTML (极限服务器渲染)
+  isStatic: boolean; // 是否是静态节点
+  isRootInsert: boolean; // 是否作为根节点插入
+  isComment: boolean; // 是否为注释节点
+  isCloned: boolean; //是否为克隆节点
+  isOnce: boolean; // 是否为渲染一次的节点?
+  asyncFactory: Function | void; //异步工厂函数
+  asyncMeta: Object | void; // 异步meta
+  isAsyncPlaceholder: boolean; // 是否为异步站位
   ssrContext: Object | void;
   fnContext: Component | void; // real context vm for functional nodes
   fnOptions: ?ComponentOptions; // for SSR caching

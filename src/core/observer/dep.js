@@ -40,7 +40,7 @@ export default class Dep {
   }
 
   notify() {
-    // stabilize the subscriber list first
+    // * 浅拷贝一个subs数组
     const subs = this.subs.slice();
     if (process.env.NODE_ENV !== "production" && !config.async) {
       // subs aren't sorted in scheduler if not running async
@@ -48,6 +48,8 @@ export default class Dep {
       // order
       subs.sort((a, b) => a.id - b.id);
     }
+
+    // * 递归让每个调用每个sub的更新函数
     for (let i = 0, l = subs.length; i < l; i++) {
       subs[i].update();
     }
