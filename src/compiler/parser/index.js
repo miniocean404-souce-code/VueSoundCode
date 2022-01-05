@@ -57,11 +57,7 @@ let platformMustUseProp;
 let platformGetTagNamespace;
 let maybeComponent;
 
-/**
- * @描述 生成AST树，组建父子关系
- * @作者 HY
- * @时间 2021-07-16 11:03
- */
+// 生成AST树，组建父子关系
 export function createASTElement(
   tag: string,
   attrs: Array<ASTAttr>,
@@ -78,11 +74,7 @@ export function createASTElement(
   };
 }
 
-/**
- * @描述 将 HTML 字符串转换为 AST
- * @作者 HY
- * @时间 2021-07-12 15:19
- */
+// 将 HTML 字符串转换为 AST
 export function parse(
   template: string,
   options: CompilerOptions
@@ -106,7 +98,7 @@ export function parse(
   const whitespaceOption = options.whitespace; //空格选项
   let root;
   let currentParent; //当前的父，第一次是undefined
-  let inVPre = false; //是否在v-pre下
+  let inVPre = false; //是否在v-pre下（这个节点是否需要编译）
   let inPre = false;
   let warned = false;
 
@@ -126,7 +118,7 @@ export function parse(
 
     // tree management
     if (!stack.length && element !== root) {
-      // allow root elements with v-if, v-else-if and v-else
+      // 允许根元素带有v-if, v-else-if和v-else
       if (root.if && (element.elseif || element.else)) {
         if (process.env.NODE_ENV !== "production") {
           checkRootConstraints(element);
@@ -163,13 +155,13 @@ export function parse(
       }
     }
 
-    // final children cleanup
-    // filter out scoped slots
+    // 最终children清理
+    // 过滤出作用域的插槽
     element.children = element.children.filter(c => !(c: any).slotScope);
-    // remove trailing whitespace node again
+    // 再次删除尾随空格节点
     trimEndingWhitespace(element);
 
-    // check pre state
+    // 检查之前的状态
     if (element.pre) {
       inVPre = false;
     }
@@ -182,9 +174,8 @@ export function parse(
     }
   }
 
-  // * 将文本节点的
+  // 删除空白节点
   function trimEndingWhitespace(el) {
-    // remove trailing whitespace node
     if (!inPre) {
       let lastNode;
       while (
@@ -197,7 +188,7 @@ export function parse(
     }
   }
 
-  // * 检查根约束
+  // 检查根约束
   function checkRootConstraints(el) {
     if (el.tag === "slot" || el.tag === "template") {
       warnOnce(
@@ -242,17 +233,17 @@ export function parse(
       let element: ASTElement = createASTElement(tag, attrs, currentParent);
 
       if (process.env.NODE_ENV !== "production") {
+        // 对象里拼接为rawAttrsMap对象，是属性的key,value格式
         if (options.outputSourceRange) {
           element.start = start;
           element.end = end;
-          // * 对象里拼接为rawAttrsMap对象，是属性的key,value格式
           element.rawAttrsMap = element.attrsList.reduce((cumulated, attr) => {
             cumulated[attr.name] = attr;
             return cumulated;
           }, {});
         }
 
-        // * 检测是否是无效的属性
+        // 检测是否是无效的属性
         attrs.forEach(attr => {
           if (invalidAttributeRE.test(attr.name)) {
             warn(
@@ -267,7 +258,7 @@ export function parse(
         });
       }
 
-      // * 不是服务端渲染，并且是禁止的标签类型就，报警告
+      // 不是服务端渲染，并且是禁止的标签类型就，报警告
       if (isForbiddenTag(element) && !isServerRendering()) {
         element.forbidden = true;
         process.env.NODE_ENV !== "production" &&
@@ -280,11 +271,12 @@ export function parse(
           );
       }
 
-      // apply pre-transforms
+      // 预转换
       for (let i = 0; i < preTransforms.length; i++) {
         element = preTransforms[i](element, options) || element;
       }
 
+      // 检测添加属性v-pre
       if (!inVPre) {
         processPre(element);
         if (element.pre) {
@@ -296,13 +288,15 @@ export function parse(
       }
       if (inVPre) {
         processRawAttrs(element);
-      } else if (!element.processed) {
-        // structural directives
+      }
+      // 没有加工过的元素加工指令结构
+      else if (!element.processed) {
         processFor(element);
         processIf(element);
         processOnce(element);
       }
 
+      // 检查元素的规范
       if (!root) {
         root = element;
         if (process.env.NODE_ENV !== "production") {
@@ -310,6 +304,7 @@ export function parse(
         }
       }
 
+      // 如果不是一元标签就加入栈队列
       if (!unary) {
         currentParent = element;
         stack.push(element);
