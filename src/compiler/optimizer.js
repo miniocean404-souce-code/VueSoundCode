@@ -17,17 +17,19 @@ const genStaticKeysCached = cached(genStaticKeys)
  * 1. Hoist them into constants, so that we no longer need to
  *    create fresh nodes for them on each re-render;
  * 2. Completely skip them in the patching process.
+ * Vue 是数据驱动，是响应式的，但是我们的模板并不是所有数据都是响应式的，也有很多数据是首次渲染后就永远不会变化的，那么这部分数据生成的 DOM 也不会变化，我们可以在 patch 的过程跳过对他们的比对。
  */
 export function optimize (root: ?ASTElement, options: CompilerOptions) {
   if (!root) return
   isStaticKey = genStaticKeysCached(options.staticKeys || '')
   isPlatformReservedTag = options.isReservedTag || no
-  // first pass: mark all non-static nodes.
+  // first pass: 标记所有非静态节点及静态节点
   markStatic(root)
-  // second pass: mark static roots.
+  // second pass: 标记静态跟
   markStaticRoots(root, false)
 }
 
+// isStaticKey 列表
 function genStaticKeys (keys: string): Function {
   return makeMap(
     'type,tag,attrsList,attrsMap,plain,parent,children,attrs,start,end,rawAttrsMap' +
@@ -35,6 +37,8 @@ function genStaticKeys (keys: string): Function {
   )
 }
 
+// 1.对于纯文本类型、vPre类型、没有绑定元素、没有if for、不是内置标签、是平台保留标签、不是模板for的直接子节点、是isStaticKey中的节点置为true
+// 2.普通元素&不是平台保留节点&不是slot&不存在inline-template之外的--其他节点的子节点及if条件内部节点，不满足isStatic（是静态节点）就将其子节点标记为非静态节点
 function markStatic (node: ASTNode) {
   node.static = isStatic(node)
   if (node.type === 1) {
@@ -67,6 +71,10 @@ function markStatic (node: ASTNode) {
   }
 }
 
+// 统一：将静态节点、节点长度存在并且长度不为1且其类型不为纯文本类型，设置为静态根
+// 1.根节点staticInFor 默认false
+// 2.子节点staticInFor children 节点中是否包含node.for
+// 3.条件节点staticInFor false
 function markStaticRoots (node: ASTNode, isInFor: boolean) {
   if (node.type === 1) {
     if (node.static || node.once) {
@@ -84,6 +92,7 @@ function markStaticRoots (node: ASTNode, isInFor: boolean) {
     } else {
       node.staticRoot = false
     }
+
     if (node.children) {
       for (let i = 0, l = node.children.length; i < l; i++) {
         markStaticRoots(node.children[i], isInFor || !!node.for)
@@ -97,6 +106,7 @@ function markStaticRoots (node: ASTNode, isInFor: boolean) {
   }
 }
 
+// 对于纯文本类型、vPre类型、没有绑定元素、没有if for、不是内置标签、是平台保留标签、不是模板for的直接子节点、是isStaticKey中的节点
 function isStatic (node: ASTNode): boolean {
   if (node.type === 2) { // expression
     return false
