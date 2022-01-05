@@ -9,22 +9,22 @@
  * http://erik.eae.net/simplehtmlparser/simplehtmlparser.js
  */
 
-import { makeMap, no } from "shared/util";
-import { isNonPhrasingTag } from "web/compiler/util";
-import { unicodeRegExp } from "core/util/lang";
+import {makeMap, no} from "shared/util";
+import {isNonPhrasingTag} from "web/compiler/util";
+import {unicodeRegExp} from "core/util/lang";
 
 // Regular Expressions for parsing tags and attributes
-const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
-const dynamicArgAttribute = /^\s*((?:v-[\w-]+:|@|:|#)\[[^=]+?\][^\s"'<>\/=]*)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
+const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/; // 属性
+const dynamicArgAttribute = /^\s*((?:v-[\w-]+:|@|:|#)\[[^=]+?\][^\s"'<>\/=]*)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/; // 动态属性
 const ncname = `[a-zA-Z_][\\-\\.0-9_a-zA-Z${unicodeRegExp.source}]*`;
 const qnameCapture = `((?:${ncname}\\:)?${ncname})`;
-const startTagOpen = new RegExp(`^<${qnameCapture}`);
-const startTagClose = /^\s*(\/?)>/;
+const startTagOpen = new RegExp(`^<${qnameCapture}`); // 开始标签
+const startTagClose = /^\s*(\/?)>/; // 开始标签中的一元标签
 const endTag = new RegExp(`^<\\/${qnameCapture}[^>]*>`);
 const doctype = /^<!DOCTYPE [^>]+>/i;
 // #7298: escape - to avoid being passed as HTML comment when inlined in page
-const comment = /^<!\--/;
-const conditionalComment = /^<!\[/;
+const comment = /^<!\--/; // 注释节点
+const conditionalComment = /^<!\[/; // 条件节点
 
 // Special Elements (can contain anything)
 export const isPlainTextElement = makeMap("script,style,textarea", true);
@@ -64,6 +64,8 @@ export function parseHTML(html, options) {
     last = html;
     // Make sure we're not in a plaintext content element like script/style
     if (!lastTag || !isPlainTextElement(lastTag)) {
+
+      // 是否以<开始
       let textEnd = html.indexOf("<");
       if (textEnd === 0) {
         //  是不是html注释节点，是注释节点、并且传入应该保留注释的话就在option生成注释的comment,并且前进
@@ -101,7 +103,7 @@ export function parseHTML(html, options) {
           continue;
         }
 
-        //  匹配到的标签前进对应的位置、将其传入parseEndTag
+        //  匹配结束标签
         const endTagMatch = html.match(endTag);
         if (endTagMatch) {
           const curIndex = index;
@@ -121,16 +123,17 @@ export function parseHTML(html, options) {
         }
       }
 
+      // 匹配标签中的文本 例如：文本</div>
       let text, rest, next;
       if (textEnd >= 0) {
         rest = html.slice(textEnd);
+        // 不是结束标签，不是开始标签，不是注释及诶单，不是条件注释，找到最后文字的 < （要将文本中的<当做字符来进行处理），并截取下来
         while (
           !endTag.test(rest) &&
           !startTagOpen.test(rest) &&
           !comment.test(rest) &&
           !conditionalComment.test(rest)
-        ) {
-          // < in plain text, be forgiving and treat it as text
+          ) {
           next = rest.indexOf("<", 1);
           if (next < 0) break;
           textEnd += next;
@@ -139,10 +142,10 @@ export function parseHTML(html, options) {
         text = html.substring(0, textEnd);
       }
 
+      // 没有<就当做文本处理并前进
       if (textEnd < 0) {
         text = html;
       }
-
       if (text) {
         advance(text.length);
       }
@@ -159,7 +162,7 @@ export function parseHTML(html, options) {
           "([\\s\\S]*?)(</" + stackedTag + "[^>]*>)",
           "i"
         ));
-      const rest = html.replace(reStackedTag, function(all, text, endTag) {
+      const rest = html.replace(reStackedTag, function (all, text, endTag) {
         endTagLength = endTag.length;
         if (!isPlainTextElement(stackedTag) && stackedTag !== "noscript") {
           text = text
@@ -197,45 +200,36 @@ export function parseHTML(html, options) {
   // Clean up any remaining tags
   parseEndTag();
 
-  /**
-   * @描述 重新指定index位置，以及截取html
-   * @作者 HY
-   * @时间 2021-07-13 10:10
-   */
+  // 前进多少，并将html赋值为前进后的字符串
   function advance(n) {
     index += n;
     html = html.substring(n);
   }
 
-  /**
-   * @描述 解析开始标签
-   * @作者 HY
-   * @时间 2021-07-16 10:39
-   */
+  //  正则匹配开始标签及上面动态、静态属性，并解析成对应的对象，前进
   function parseStartTag() {
-    // * 正则匹配开始标签，并解析成对应的对象，前进
     const start = html.match(startTagOpen);
     if (start) {
       const match = {
         tagName: start[1],
         attrs: [],
-        start: index
+        start: index // 当前解析位置
       };
       advance(start[0].length);
 
-      // * 匹配开始标签对应动态或者静态的属性
+      // 匹配开始标签对应动态或者静态的属性
       let end, attr;
       while (
         !(end = html.match(startTagClose)) &&
         (attr = html.match(dynamicArgAttribute) || html.match(attribute))
-      ) {
+        ) {
         attr.start = index; //记录开始结束位置，并将其push进match数组中
         advance(attr[0].length);
         attr.end = index;
         match.attrs.push(attr);
       }
 
-      // * 如果有结束标签就截取，并前进
+      // 如果有结束标签就截取,并前进
       if (end) {
         match.unarySlash = end[1]; //一元标签标志
         advance(end[0].length);
@@ -245,11 +239,7 @@ export function parseHTML(html, options) {
     }
   }
 
-  /**
-   * @描述
-   * @作者 HY
-   * @时间 2021-07-16 10:47
-   */
+  // 处理开始标签中的一元标签，及开始标签中的属性列表
   function handleStartTag(match) {
     const tagName = match.tagName;
     const unarySlash = match.unarySlash;
@@ -263,10 +253,10 @@ export function parseHTML(html, options) {
       }
     }
 
-    // * 查看其是否是原生一元标签或者是在爬取开始标签时候被发现的非原生一元标签（组件、或者其他）
+    //  查看其是否是原生一元标签或者是在爬取开始标签时候被发现的非原生一元标签（组件、或者其他）
     const unary = isUnaryTag(tagName) || !!unarySlash;
 
-    // * 将爬取下来的正则值解码拼接成新的属性对象
+    // 将爬取下来的正则值解码拼接成ast属性对象
     const l = match.attrs.length;
     const attrs = new Array(l);
     for (let i = 0; i < l; i++) {
@@ -283,12 +273,12 @@ export function parseHTML(html, options) {
       };
 
       if (process.env.NODE_ENV !== "production" && options.outputSourceRange) {
-        attrs[i].start = args.start + args[0].match(/^\s*/).length; //去空格属性开始的位置
+        attrs[i].start = args.start + args[0].match(/^\s*/).length; //去xx属性开始的位置
         attrs[i].end = args.end; //属性结束的位置
       }
     }
 
-    // * 不是一元标签就将其属性、标签名、开始结束位置拼接为标签对象并且加入到一个栈队列
+    //  不是一元标签就将其属性、标签名、开始结束位置拼接为标签对象并且加入到一个栈队列
     if (!unary) {
       stack.push({
         tag: tagName,
@@ -300,12 +290,13 @@ export function parseHTML(html, options) {
       lastTag = tagName;
     }
 
-    // * 执行start函数
+    //  执行start函数
     if (options.start) {
       options.start(tagName, attrs, unary, match.start, match.end);
     }
   }
 
+  // 解析结束标签并且没有对应的结束标签进行报错
   function parseEndTag(tagName, start, end) {
     let pos, lowerCasedTagName;
     if (start == null) start = index;

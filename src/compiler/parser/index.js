@@ -226,19 +226,19 @@ export function parse(
     outputSourceRange: options.outputSourceRange,
 
     start(tag, attrs, unary, start, end) {
-      // * 检查命名空间。如果有父 ns，则继承父 ns
+      // 检查命名空间。如果有父 ns，则继承父 ns
       const ns =
         (currentParent && currentParent.ns) || platformGetTagNamespace(tag);
       if (ns) {
         element.ns = ns;
       }
 
-      // * 处理 IE svg bug
+      // 处理 IE svg bug
       if (isIE && ns === "svg") {
         attrs = guardIESVGBug(attrs);
       }
 
-      // * 创建一个ast元素，组建父子关系
+      // 创建一个ast元素，组建父子关系
       let element: ASTElement = createASTElement(tag, attrs, currentParent);
 
       if (process.env.NODE_ENV !== "production") {
