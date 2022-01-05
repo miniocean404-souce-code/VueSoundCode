@@ -40,8 +40,10 @@ export function generate (
   ast: ASTElement | void,
   options: CompilerOptions
 ): CodegenResult {
+  // 代码生成传参属性
   const state = new CodegenState(options)
   const code = ast ? genSSRElement(ast, state) : '_c("div")'
+  // with可以直接使用括号中的对象 不用 this.xx 而是 xx
   return {
     render: `with(this){return ${code}}`,
     staticRenderFns: state.staticRenderFns
