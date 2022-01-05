@@ -4,17 +4,9 @@ import { extend } from "shared/util";
 import { detectErrors } from "./error-detector";
 import { createCompileToFunctionFn } from "./to-function";
 
-/**
- * @描述 通过传入编译核心三步的函数，在这里创建一个编译器函数createCompiler，并返回
- * @作者 HY
- * @时间 2021-07-12 14:02
- */
+// 通过不同平台不同编译的函数 （传入编译核心三步的函数），在这里创建一个编译器函数createCompiler，并返回
 export function createCompilerCreator(baseCompile: Function): Function {
-  /**
-   * @描述 编译器函数根据不同的选项进行生成编译函数，并返回compile、createCompileToFunctionFn
-   * @作者 HY
-   * @时间 2021-07-12 14:10
-   */
+  // 根据不同的编译选项进行生成编译函数，并返回compile、createCompileToFunctionFn
   return function createCompiler(baseOptions: CompilerOptions) {
     function compile(
       template: string,
@@ -28,7 +20,7 @@ export function createCompilerCreator(baseCompile: Function): Function {
         (tip ? tips : errors).push(msg);
       };
 
-      // * 扩展拼接options
+      // 扩展拼接options
       if (options) {
         if (
           process.env.NODE_ENV !== "production" &&
@@ -50,20 +42,20 @@ export function createCompilerCreator(baseCompile: Function): Function {
             (tip ? tips : errors).push(data);
           };
         }
-        // merge custom modules
+        // 合并自定义的模块
         if (options.modules) {
           finalOptions.modules = (baseOptions.modules || []).concat(
             options.modules
           );
         }
-        // merge custom directives
+        // 合并自定义指令
         if (options.directives) {
           finalOptions.directives = extend(
             Object.create(baseOptions.directives || null),
             options.directives
           );
         }
-        // copy other options
+        // 复制其他属性
         for (const key in options) {
           if (key !== "modules" && key !== "directives") {
             finalOptions[key] = options[key];
@@ -73,7 +65,7 @@ export function createCompilerCreator(baseCompile: Function): Function {
 
       finalOptions.warn = warn;
 
-      // !通过传入的真正核心编译函数，并将其返回
+      // 通过传入的不同平台不同编译的函数并将其返回 （真正核心编译函数，）
       const compiled = baseCompile(template.trim(), finalOptions);
 
       if (process.env.NODE_ENV !== "production") {

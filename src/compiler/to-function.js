@@ -18,14 +18,11 @@ function createFunction(code, errors) {
   }
 }
 
-/**
- * @描述 将模板编译成函数
- * @作者 HY
- * @时间 2021-07-12 14:39
- */
+// 创建将ast编译成函数的函数
 export function createCompileToFunctionFn(compile: Function): Function {
   const cache = Object.create(null);
 
+  // 将字符串编译成函数
   return function compileToFunctions(
     template: string,
     options?: CompilerOptions,
@@ -35,7 +32,7 @@ export function createCompileToFunctionFn(compile: Function): Function {
     const warn = options.warn || baseWarn;
     delete options.warn;
 
-    // * 检测是否可以正常生成一个函数
+    // 检测是否可以正常生成一个函数
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== "production") {
       // detect possible CSP restriction
@@ -54,7 +51,7 @@ export function createCompileToFunctionFn(compile: Function): Function {
       }
     }
 
-    // * 如果存在对应的缓存就返回
+    // 如果存在对应的缓存就返回
     const key = options.delimiters
       ? String(options.delimiters) + template
       : template;
@@ -66,7 +63,7 @@ export function createCompileToFunctionFn(compile: Function): Function {
     // !在template模板中，挂载调用的编译
     const compiled = compile(template, options);
 
-    // * 检查编译错误提示
+    // 检查编译错误提示
     if (process.env.NODE_ENV !== "production") {
       if (compiled.errors && compiled.errors.length) {
         if (options.outputSourceRange) {
@@ -95,16 +92,17 @@ export function createCompileToFunctionFn(compile: Function): Function {
       }
     }
 
-    // * 将代码转换成函数
+    // 将代码转换成函数
     const res = {};
     const fnGenErrors = [];
-    // * 将render编译成函数
+
+    // 将render字符串通过new Function编译成函数
     res.render = createFunction(compiled.render, fnGenErrors);
     res.staticRenderFns = compiled.staticRenderFns.map(code => {
       return createFunction(code, fnGenErrors);
     });
 
-    // * 检查函数生成错误。只有在编译器函数本身存在错误时才会发生这种情况。主要用于代码生成开发使用
+    // 检查函数生成错误。只有在编译器函数本身存在错误时才会发生这种情况。主要用于代码生成开发使用
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== "production") {
       if ((!compiled.errors || !compiled.errors.length) && fnGenErrors.length) {
@@ -118,7 +116,7 @@ export function createCompileToFunctionFn(compile: Function): Function {
       }
     }
 
-    // * 将编译缓存
+    // 将编译缓存
     return (cache[key] = res);
   };
 }
