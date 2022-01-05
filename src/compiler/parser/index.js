@@ -116,7 +116,7 @@ export function parse(
       element = processElement(element, options);
     }
 
-    // tree management
+    // 树管理
     if (!stack.length && element !== root) {
       // 允许根元素带有v-if, v-else-if和v-else
       if (root.if && (element.elseif || element.else)) {
@@ -137,14 +137,14 @@ export function parse(
       }
     }
 
+    // 存在父添加父子关系
     if (currentParent && !element.forbidden) {
       if (element.elseif || element.else) {
         processIfConditions(element, currentParent);
       } else {
         if (element.slotScope) {
           // scoped slot
-          // keep it in the children list so that v-else(-if) conditions can
-          // find it as the prev node.
+          // 将它保存在子列表中，这样v-else(-if)条件就可以找到它作为prev节点
           const name = element.slotTarget || '"default"';
           (currentParent.scopedSlots || (currentParent.scopedSlots = {}))[
             name
@@ -155,20 +155,20 @@ export function parse(
       }
     }
 
-    // 最终children清理
-    // 过滤出作用域的插槽
+    // 最终children清理过滤出作用域的插槽
     element.children = element.children.filter(c => !(c: any).slotScope);
     // 再次删除尾随空格节点
     trimEndingWhitespace(element);
 
-    // 检查之前的状态
+    // 还原之前的状态
     if (element.pre) {
       inVPre = false;
     }
+    // 还原之前的状态
     if (platformIsPreTag(element.tag)) {
       inPre = false;
     }
-    // apply post-transforms
+    // 执行 post-transforms
     for (let i = 0; i < postTransforms.length; i++) {
       postTransforms[i](element, options);
     }
@@ -304,7 +304,7 @@ export function parse(
         }
       }
 
-      // 如果不是一元标签就加入栈队列
+      // 如果不是一元标签就加入栈队列,是一元标签就添加父子关系
       if (!unary) {
         currentParent = element;
         stack.push(element);
@@ -340,7 +340,7 @@ export function parse(
         }
         return;
       }
-      // IE textarea placeholder bug
+      // IE textarea placeholder 问题
       /* istanbul ignore if */
       if (
         isIE &&
@@ -357,8 +357,7 @@ export function parse(
         text = "";
       } else if (whitespaceOption) {
         if (whitespaceOption === "condense") {
-          // in condense mode, remove the whitespace node if it contains
-          // line break, otherwise condense to a single space
+          // 在压缩模式下，如果空格节点包含换行符，则删除空格节点，否则压缩为单个空格
           text = lineBreakRE.test(text) ? "" : " ";
         } else {
           text = " ";
@@ -366,13 +365,16 @@ export function parse(
       } else {
         text = preserveWhitespace ? " " : "";
       }
+
+      // 创建文本子节点，一种是有表达式的，type 为 2，一种是纯文本，type 为 3
       if (text) {
         if (!inPre && whitespaceOption === "condense") {
-          // condense consecutive whitespaces into single space
+          // 将连续的空格压缩成单个空格
           text = text.replace(whitespaceRE, " ");
         }
         let res;
         let child: ?ASTNode;
+        // 如果有分隔符，有文本内容就位表达式的文本
         if (!inVPre && text !== " " && (res = parseText(text, delimiters))) {
           child = {
             type: 2,
@@ -380,7 +382,9 @@ export function parse(
             tokens: res.tokens,
             text
           };
-        } else if (
+        }
+        // 如果有文本或者文本不存在子内容，就是一个纯文本
+        else if (
           text !== " " ||
           !children.length ||
           children[children.length - 1].text !== " "
@@ -390,6 +394,7 @@ export function parse(
             text
           };
         }
+
         if (child) {
           if (
             process.env.NODE_ENV !== "production" &&
