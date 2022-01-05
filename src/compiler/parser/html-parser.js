@@ -55,8 +55,8 @@ function decodeAttr(value, shouldDecodeNewlines) {
 export function parseHTML(html, options) {
   const stack = [];
   const expectHTML = options.expectHTML;
-  const isUnaryTag = options.isUnaryTag || no;
-  const canBeLeftOpenTag = options.canBeLeftOpenTag || no;
+  const isUnaryTag = options.isUnaryTag || no; // 是否是一元标签
+  const canBeLeftOpenTag = options.canBeLeftOpenTag || no; // 是否是左闭合标签
   let index = 0;
   let last, lastTag;
 
@@ -66,7 +66,7 @@ export function parseHTML(html, options) {
     if (!lastTag || !isPlainTextElement(lastTag)) {
       let textEnd = html.indexOf("<");
       if (textEnd === 0) {
-        // * 是不是html注释节点，是注释节点、并且传入应该保留注释的话就在option生成注释的comment,并且前进
+        //  是不是html注释节点，是注释节点、并且传入应该保留注释的话就在option生成注释的comment,并且前进
         if (comment.test(html)) {
           const commentEnd = html.indexOf("-->");
 
@@ -84,6 +84,7 @@ export function parseHTML(html, options) {
         }
 
         // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
+        // 条件注释 例如：<!--[if !IE]>-->
         if (conditionalComment.test(html)) {
           const conditionalEnd = html.indexOf("]>");
 
@@ -93,14 +94,14 @@ export function parseHTML(html, options) {
           }
         }
 
-        // * 如果是个Doctype就忽略，并前进过去
+        //  如果是个Doctype就忽略，并前进过去
         const doctypeMatch = html.match(doctype);
         if (doctypeMatch) {
           advance(doctypeMatch[0].length);
           continue;
         }
 
-        // * 匹配到的标签前进对应的位置、将其传入parseEndTag
+        //  匹配到的标签前进对应的位置、将其传入parseEndTag
         const endTagMatch = html.match(endTag);
         if (endTagMatch) {
           const curIndex = index;
@@ -109,7 +110,7 @@ export function parseHTML(html, options) {
           continue;
         }
 
-        // * 匹配开始标签
+        //  匹配开始标签
         const startTagMatch = parseStartTag();
         if (startTagMatch) {
           handleStartTag(startTagMatch);

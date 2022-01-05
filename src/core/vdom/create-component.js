@@ -143,8 +143,8 @@ export function createComponentInstanceForVnode(
   // * 缓存当前组件和当前组件的挂载的真实DOM 比如App组件和#app
   const options: InternalComponentOptions = {
     _isComponent: true,
-    _parentVnode: vnode, //占位符VNode
-    parent //当前实例
+    _parentVnode: vnode, //占位符（组件）VNode
+    parent // 其父实例 当前激活的实例
   };
   // 检查内联模板渲染功能 check inline-template render functions
   const inlineTemplate = vnode.data.inlineTemplate;

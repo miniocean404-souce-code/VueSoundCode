@@ -912,6 +912,8 @@ export function createPatchFunction(backend) {
     }
 
     let isInitialPatch = false; //是否是第一次的patch
+
+    // insertedVnodeQueue 就是在一次 patch 过程中维护的插入的 vnode 的队列，它会收集待执行 mounted 钩子函数的 vnode 节点，在一次 patch 过程中，可能会有子组件，出现递归渲染子组件的过程，但是整个过程是同步的，子组件的 vnode 仍然会收集到 insertedVnodeQueue。而且过程中子组件的 vnode 会先添加进 insertedVnodeQueue，所以最终先执行子组件的 mounted，再执行父组件的 monted。
     const insertedVnodeQueue = []; //插入Vnode队列
 
     // * 没有之前的节点就挂载一个根节点（组件使用）
