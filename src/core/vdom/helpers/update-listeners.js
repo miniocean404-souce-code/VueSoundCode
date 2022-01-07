@@ -50,6 +50,7 @@ export function createFnInvoker (fns: Function | Array<Function>, vm: ?Component
   return invoker
 }
 
+// 没有事件就创建事件用原声方式进行添加，有事件就将old.fns更新为新的事件，最后移除不需要的事件
 export function updateListeners (
   on: Object,
   oldOn: Object,
@@ -62,6 +63,8 @@ export function updateListeners (
   for (name in on) {
     def = cur = on[name]
     old = oldOn[name]
+
+    // v-model使用
     event = normalizeEvent(name)
     /* istanbul ignore if */
     if (__WEEX__ && isPlainObject(def)) {
@@ -73,7 +76,9 @@ export function updateListeners (
         `Invalid handler for event "${event.name}": got ` + String(cur),
         vm
       )
-    } else if (isUndef(old)) {
+    }
+    // 没有定义当前事件就添加新的事件
+    else if (isUndef(old)) {
       if (isUndef(cur.fns)) {
         cur = on[name] = createFnInvoker(cur, vm)
       }
@@ -81,11 +86,15 @@ export function updateListeners (
         cur = on[name] = createOnceHandler(event.name, cur, event.capture)
       }
       add(event.name, cur, event.capture, event.passive, event.params)
-    } else if (cur !== old) {
+    }
+    // 定义了就更新事件（Invoker中的fns）
+    else if (cur !== old) {
       old.fns = cur
       on[name] = old
     }
   }
+
+  // 遍历旧的事件,并且当前更新过后的事件on中不存在这个事件，就移除
   for (name in oldOn) {
     if (isUndef(on[name])) {
       event = normalizeEvent(name)

@@ -28,11 +28,7 @@ import {
 
 // inline hooks to be invoked on component VNodes during patch
 
-/**
- * @描述 继承大Vue及其option，安装组件钩子，创建组件占位符VNode
- * @作者 HY
- * @时间 2021-06-27 18:56
- */
+// 继承大Vue及其option，安装组件钩子，创建组件占位符VNode
 export function createComponent(
   Ctor: Class<Component> | Function | Object | void,
   data: ?VNodeData,
@@ -44,12 +40,12 @@ export function createComponent(
     return;
   }
 
-  // * 取到大构造函数Vue，并继承构造函数(在core\global-api\index.js中)
+  // 取到大构造函数Vue，并继承构造函数(在core\global-api\index.js中)
   const baseCtor = context.$options._base;
   if (isObject(Ctor)) {
     Ctor = baseCtor.extend(Ctor);
   }
-  // * 如果继承之后不是组件构造函数就报警告：无效的组件
+  // 如果继承之后不是组件构造函数就报警告：无效的组件
   if (typeof Ctor !== "function") {
     if (process.env.NODE_ENV !== "production") {
       warn(`Invalid Component definition: ${String(Ctor)}`, context);
@@ -57,11 +53,10 @@ export function createComponent(
     return;
   }
 
-  // ! 异步组件
   let asyncFactory;
   if (isUndef(Ctor.cid)) {
     asyncFactory = Ctor;
-    // * 解析成异步组件构造函数
+    // 解析成异步组件构造函数
     Ctor = resolveAsyncComponent(asyncFactory, baseCtor);
     if (Ctor === undefined) {
       // 为异步组件返回一个占位符节点，该节点呈现为注释节点，但保留该节点的所有原始信息。该信息将用于异步服务器渲染和水化
@@ -71,21 +66,21 @@ export function createComponent(
 
   data = data || {};
 
-  // * 解析构造函数选项，继承mixin等选项的继承
+  // 解析构造函数选项，继承mixin等选项的继承
   resolveConstructorOptions(Ctor);
-  // * 将组件v-model 数据转换为 props 和 events transform component v-model data into props & events
+  // 将组件v-model 数据转换为 props 和 events transform component v-model data into props & events
   if (isDef(data.model)) {
     transformModel(Ctor.options, data);
   }
-  // * 提取 props
+  // 提取 props
   const propsData = extractPropsFromVNodeData(data, Ctor, tag);
 
-  // * 创建函数性组件
+  // 创建函数性组件
   if (isTrue(Ctor.options.functional)) {
     return createFunctionalComponent(Ctor, propsData, data, context, children);
   }
 
-  // 提取侦听器，因为这些侦听器需要被视为子组件侦听器，而不是DOM侦听器 extract listeners, since these needs to be treated as
+  // 自定义事件 -- 提取侦听器，因为这些侦听器需要被视为子组件侦听器，而不是DOM侦听器  extract listeners, since these needs to be treated as
   // child component listeners instead of DOM listeners
   const listeners = data.on;
   // 用.native修饰符替换为侦听器，以便在父组件补丁期间对其进行处理 replace with listeners with .native modifier
@@ -233,11 +228,7 @@ const componentVNodeHooks = {
 // !获取组件钩子的数组
 const hooksToMerge = Object.keys(componentVNodeHooks);
 
-/**
- * @描述 将钩子合并到data中，返回合并后的函数，调用时候回顺序执行，并且定义_merged
- * @作者 HY
- * @时间 2021-06-27 18:45
- */
+// 将钩子合并到data中，返回合并后的函数，调用时候回顺序执行，并且定义_merged
 function installComponentHooks(data: VNodeData) {
   const hooks = data.hook || (data.hook = {});
   for (let i = 0; i < hooksToMerge.length; i++) {

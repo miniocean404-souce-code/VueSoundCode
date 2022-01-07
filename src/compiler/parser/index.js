@@ -459,6 +459,7 @@ function processRawAttrs(el) {
   }
 }
 
+// 处理元素节点过程
 export function processElement(element: ASTElement, options: CompilerOptions) {
   processKey(element);
 
@@ -781,32 +782,39 @@ function processComponent(el) {
   }
 }
 
+// export const onRE = /^@|^v-on:/
+// export const dirRE = /^v-|^@|^:/
+// export const bindRE = /^:|^v-bind:/
 function processAttrs(el) {
   const list = el.attrsList;
   let i, l, name, rawName, value, modifiers, syncGen, isDynamic;
   for (i = 0, l = list.length; i < l; i++) {
     name = rawName = list[i].name;
     value = list[i].value;
+
+    // 如果是绑定属性类型的修饰
     if (dirRE.test(name)) {
       // mark element as dynamic
       el.hasBindings = true;
-      // modifiers
+      // 找到修饰符
       modifiers = parseModifiers(name.replace(dirRE, ""));
-      // support .foo shorthand syntax for the .prop modifier
+      // 支持.prop修饰符的.foo简写语法
       if (process.env.VBIND_PROP_SHORTHAND && propBindRE.test(name)) {
         (modifiers || (modifiers = {})).prop = true;
         name = `.` + name.slice(1).replace(modifierRE, "");
       } else if (modifiers) {
         name = name.replace(modifierRE, "");
       }
+
+      // 如果是绑定的属性
       if (bindRE.test(name)) {
-        // v-bind
         name = name.replace(bindRE, "");
         value = parseFilters(value);
         isDynamic = dynamicArgRE.test(name);
         if (isDynamic) {
           name = name.slice(1, -1);
         }
+
         if (
           process.env.NODE_ENV !== "production" &&
           value.trim().length === 0
@@ -815,14 +823,18 @@ function processAttrs(el) {
             `The value for a v-bind expression cannot be empty. Found in "v-bind:${name}"`
           );
         }
+
         if (modifiers) {
           if (modifiers.prop && !isDynamic) {
             name = camelize(name);
             if (name === "innerHtml") name = "innerHTML";
           }
+
           if (modifiers.camel && !isDynamic) {
             name = camelize(name);
           }
+
+          // 如果存在.sync修饰符
           if (modifiers.sync) {
             syncGen = genAssignmentCode(value, `$event`);
             if (!isDynamic) {
@@ -869,7 +881,9 @@ function processAttrs(el) {
         } else {
           addAttr(el, name, value, list[i], isDynamic);
         }
-      } else if (onRE.test(name)) {
+      }
+      // 如果绑定的是事件
+      else if (onRE.test(name)) {
         // v-on
         name = name.replace(onRE, "");
         isDynamic = dynamicArgRE.test(name);
@@ -891,6 +905,7 @@ function processAttrs(el) {
             isDynamic = true;
           }
         }
+
         addDirective(
           el,
           name,
@@ -901,6 +916,7 @@ function processAttrs(el) {
           modifiers,
           list[i]
         );
+
         if (process.env.NODE_ENV !== "production" && name === "model") {
           checkForAliasModel(el, value);
         }

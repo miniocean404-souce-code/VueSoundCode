@@ -79,11 +79,7 @@ export function initMixin(Vue: Class<Component>) {
   };
 }
 
-/**
- * @描述 初始化内部组件，在当前组件中合并父占位符vnode的一些属性（这种合并是因为它比动态枚举要快。）
- * @作者 HY
- * @时间 2021-06-27 14:22
- */
+// 初始化内部组件，在当前组件中合并父占位符VNode的一些属性（这种合并是因为它比动态枚举要快
 export function initInternalComponent(
   vm: Component,
   options: InternalComponentOptions
@@ -92,29 +88,24 @@ export function initInternalComponent(
   const parentVnode = options._parentVnode;
   const opts = (vm.$options = Object.create(vm.constructor.options));
 
-  //* vm.$options中挂载父Vue实例和父Vnode
-  opts._parentVnode = parentVnode;
+  opts._parentVnode = parentVnode; // vm.$options中挂载父Vue实例和父VNode
   opts.parent = options.parent; // 子组件的父vue实例
 
-  //* 将占位符Vnode的组件选项赋值给当前子Vm实例
+  //* 将占位符VNode(父组件)的组件选项赋值给当前子Vm实例
   const vnodeComponentOptions = parentVnode.componentOptions;
   opts.propsData = vnodeComponentOptions.propsData;
   opts._parentListeners = vnodeComponentOptions.listeners;
   opts._renderChildren = vnodeComponentOptions.children;
   opts._componentTag = vnodeComponentOptions.tag;
 
-  // * 这时候还没有编译render函数，查看用户是否自己手写了render函数
+  // 这时候还没有编译render函数，查看用户是否自己手写了render函数
   if (options.render) {
     opts.render = options.render;
     opts.staticRenderFns = options.staticRenderFns;
   }
 }
 
-/**
- * @描述 解析构造函数中的option，并返回
- * @作者 HY
- * @时间 2021-06-27 16:15
- */
+// 解析构造函数中的option，并返回
 export function resolveConstructorOptions(Ctor: Class<Component>) {
   let options = Ctor.options;
   if (Ctor.super) {

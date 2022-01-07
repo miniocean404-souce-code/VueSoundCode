@@ -12,7 +12,7 @@ import { updateListeners } from '../vdom/helpers/index'
 export function initEvents (vm: Component) {
   vm._events = Object.create(null)
   vm._hasHookEvent = false
-  // init parent attached events
+  // 初始化父组件的附加事件
   const listeners = vm.$options._parentListeners
   if (listeners) {
     updateComponentListeners(vm, listeners)
@@ -39,6 +39,7 @@ function createOnceHandler (event, fn) {
   }
 }
 
+// 更新或添加当前传入的组件实例的事件
 export function updateComponentListeners (
   vm: Component,
   listeners: Object,
@@ -49,6 +50,7 @@ export function updateComponentListeners (
   target = undefined
 }
 
+// 添加事件中心混入钩子
 export function eventsMixin (Vue: Class<Component>) {
   const hookRE = /^hook:/
   Vue.prototype.$on = function (event: string | Array<string>, fn: Function): Component {
