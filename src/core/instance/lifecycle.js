@@ -17,6 +17,7 @@ import {
   validateProp,
   warn
 } from "../util/index";
+import keepAlive from "../components/keep-alive";
 
 export let activeInstance: any = null;
 export let isUpdatingChildComponent: boolean = false;
@@ -67,22 +68,20 @@ export function initLifecycle(vm: Component) {
   vm._isBeingDestroyed = false;
 }
 
-/**
- * @描述 挂载_update函数、$forceUpdate函数、$destroy函数
- * @作者 HY
- * @时间 2021-06-27 17:38
- */
+// 挂载_update函数、$forceUpdate函数、$destroy函数
 export function lifecycleMixin(Vue: Class<Component>) {
+
+  // 将render函数执行后生成的VNode将其放入patch中进行执行更新操作
   Vue.prototype._update = function(vnode: VNode, hydrating?: boolean) {
-    // * 定义
     const vm: Component = this;
     const prevEl = vm.$el;
     const prevVnode = vm._vnode;
-    // * 设置当前的实例（子组件的父实例），在子组件进行渲染时候可以设置其parent（子组件渲染时候就是子组件，就可以设置其孙子组件的父实例为子组件实例）以便建立父子关系
-    const restoreActiveInstance = setActiveInstance(vm);
-    vm._vnode = vnode; // _vnode：_render函数生成的渲染vnode
 
-    // * 如果有之前的节点就更新，否则就直接渲染，path在之前根据当前的平台以及DOM方法用createPatchFunction进行合并
+    // 设置当前的实例（子组件的父实例），在子组件进行渲染时候可以设置其parent（子组件渲染时候就是子组件，就可以设置其孙子组件的父实例为子组件实例）以便建立父子关系
+    const restoreActiveInstance = setActiveInstance(vm);
+    vm._vnode = vnode; // _vnode：render函数生成的渲染VNode
+
+    // 如果渲染过就更新，否则就直接渲染，path在之前根据当前的平台以及DOM方法用createPatchFunction进行合并
     if (!prevVnode) {
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */);
     } else {
@@ -90,10 +89,10 @@ export function lifecycleMixin(Vue: Class<Component>) {
       vm.$el = vm.__patch__(prevVnode, vnode);
     }
 
-    // * 回到之前的实例
+    // 回到之前的实例
     restoreActiveInstance();
 
-    // * 之前的置空，当前的$el设置__vue__为当前实例
+    // 之前的置空，当前的$el设置__vue__为当前实例
     if (prevEl) {
       prevEl.__vue__ = null;
     }
@@ -161,11 +160,7 @@ export function lifecycleMixin(Vue: Class<Component>) {
   };
 }
 
-/**
- * @描述 $mount函数挂载
- * @作者 HY
- * @时间 2021-06-27 16:35
- */
+// $mount函数挂载
 export function mountComponent(
   vm: Component,
   el: ?Element,
@@ -231,7 +226,7 @@ export function mountComponent(
   }
 
   // 我们将其设置为监视程序构造函数中的vm._watcher，因为监视程序的初始修补程序可能会调用forceUpdate（例如，在子组件的已挂接钩子内部），它依赖于已定义的vm._watcher
-  // * new Watcher函数，调用 updateComponent 函数,渲染完成进行数据更新
+  // new Watcher函数，调用 updateComponent 函数,渲染完成进行数据更新
   new Watcher(
     vm,
     updateComponent,
@@ -339,6 +334,7 @@ export function updateChildComponent(
   }
 }
 
+// 是否在未激活的树中
 function isInInactiveTree(vm) {
   while (vm && (vm = vm.$parent)) {
     if (vm._inactive) return true;
@@ -346,6 +342,8 @@ function isInInactiveTree(vm) {
   return false;
 }
 
+// keepAlive激活钩子，是否是失活状态_inactive置为false 递归执行子组件的activated钩子
+// direct用来指定当前是否已经挂载 第一次挂载会执行 activated钩子
 export function activateChildComponent(vm: Component, direct?: boolean) {
   if (direct) {
     vm._directInactive = false;
@@ -364,6 +362,8 @@ export function activateChildComponent(vm: Component, direct?: boolean) {
   }
 }
 
+// keepAlive失活钩子，是否是失活状态_inactive置为true 递归执行子组件的deactivated钩子
+// direct用来指定当前是否已经挂载 没有挂载不需要执行失活钩子
 export function deactivateChildComponent(vm: Component, direct?: boolean) {
   if (direct) {
     vm._directInactive = true;
@@ -371,6 +371,7 @@ export function deactivateChildComponent(vm: Component, direct?: boolean) {
       return;
     }
   }
+
   if (!vm._inactive) {
     vm._inactive = true;
     for (let i = 0; i < vm.$children.length; i++) {
@@ -380,7 +381,7 @@ export function deactivateChildComponent(vm: Component, direct?: boolean) {
   }
 }
 
-// !根据传过来的生命周期字符串 遍历执行 声明周期钩子
+// 根据传过来的生命周期字符串 遍历执行 声明周期钩子
 export function callHook(vm: Component, hook: string) {
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget();

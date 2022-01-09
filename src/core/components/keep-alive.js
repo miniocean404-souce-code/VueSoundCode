@@ -9,6 +9,7 @@ function getComponentName (opts: ?VNodeComponentOptions): ?string {
   return opts && (opts.Ctor.options.name || opts.tag)
 }
 
+// 是否匹配 可以是字符串正则数组
 function matches (pattern: string | RegExp | Array<string>, name: string): boolean {
   if (Array.isArray(pattern)) {
     return pattern.indexOf(name) > -1
@@ -21,6 +22,7 @@ function matches (pattern: string | RegExp | Array<string>, name: string): boole
   return false
 }
 
+// 当include或者exclude变化时候，如果缓存里的VNode名字 不包含在include 或者 不包含在exclude中就删除这个缓存
 function pruneCache (keepAliveInstance: any, filter: Function) {
   const { cache, keys, _vnode } = keepAliveInstance
   for (const key in cache) {
@@ -34,6 +36,7 @@ function pruneCache (keepAliveInstance: any, filter: Function) {
   }
 }
 
+// 删除缓存过的VNode实例及key
 function pruneCacheEntry (
   cache: VNodeCache,
   key: string,
@@ -41,6 +44,7 @@ function pruneCacheEntry (
   current?: VNode
 ) {
   const cached = cache[key]
+  // （!current） 用于销毁 cached.tag !== current.tag 用于缓存的VNode不等于当前渲染的VNode 就销毁
   if (cached && (!current || cached.tag !== current.tag)) {
     cached.componentInstance.$destroy()
   }
@@ -66,6 +70,7 @@ export default {
   },
 
   destroyed () {
+    // 销毁或有缓存
     for (const key in this.cache) {
       pruneCacheEntry(this.cache, key, this.keys)
     }
@@ -81,13 +86,17 @@ export default {
   },
 
   render () {
+    // 获取将keep-alive中的default插槽中的内容
     const slot = this.$slots.default
+    // <keep-alive> 只处理第一个子元素，所以一般和它搭配使用的有 component 动态组件或者是 router-view。
     const vnode: VNode = getFirstComponentChild(slot)
     const componentOptions: ?VNodeComponentOptions = vnode && vnode.componentOptions
     if (componentOptions) {
       // check pattern
       const name: ?string = getComponentName(componentOptions)
       const { include, exclude } = this
+
+      // include不包含就或者exclude包含就不缓存直接 return 当前VNode
       if (
         // not included
         (include && (!name || !matches(include, name))) ||
@@ -97,15 +106,18 @@ export default {
         return vnode
       }
 
+      // 获取组件key是否被缓存过 没有就缓存， 有就获取VNode的key
       const { cache, keys } = this
       const key: ?string = vnode.key == null
-        // same constructor may get registered as different local components
-        // so cid alone is not enough (#3269)
+        // 相同的构造函数可能会被注册为不同的本地组件，因此仅使用cid是不够的 (#3269)
         ? componentOptions.Ctor.cid + (componentOptions.tag ? `::${componentOptions.tag}` : '')
         : vnode.key
+
+      // 存在缓存就直接赋值组件实例
+      // 不存在就添加到cache中
       if (cache[key]) {
         vnode.componentInstance = cache[key].componentInstance
-        // make current key freshest
+        // 保证key新鲜
         remove(keys, key)
         keys.push(key)
       } else {
@@ -119,6 +131,7 @@ export default {
 
       vnode.data.keepAlive = true
     }
+
     return vnode || (slot && slot[0])
   }
 }

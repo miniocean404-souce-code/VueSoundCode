@@ -98,16 +98,12 @@ export function renderMixin(Vue: Class<Component>) {
     return nextTick(fn, this);
   };
 
-  /**
-   * @描述 用render函数执行$createElement
-   * @作者 HY
-   * @时间 2021-06-27 17:03
-   */
+  // 当前VM执行render函数传入$createElement生成新的VNode
   Vue.prototype._render = function(): VNode {
     // * 声明
     const vm: Component = this;
     let vnode;
-    const { render, _parentVnode } = vm.$options; //_parentVnode 占位符vnode（例如h(App)）
+    const { render, _parentVnode } = vm.$options; // _parentVNode 占位符VNode（例如h(App)）
     if (_parentVnode) {
       vm.$scopedSlots = normalizeScopedSlots(
         _parentVnode.data.scopedSlots,
@@ -115,12 +111,11 @@ export function renderMixin(Vue: Class<Component>) {
         vm.$scopedSlots
       );
     }
-    // 组件Vnode
+    // 组件VNode
     vm.$vnode = _parentVnode; //占位符vnode（例如h(App)）
 
-    // * 调用编译或者手写的render函数执行$createElement渲染当前界面的vnode
-    // * 渲染出错就渲染错误界面，如果渲染错误界面出错就包警告，将渲染vode返回给vnode
-    // * 不管如何都将当前的渲染实例置空
+    // 调用编译或者手写的render函数执行$createElement渲染当前界面的VNode
+    // 渲染出错就渲染错误界面，如果渲染错误界面出错就包警告，将渲染VNode返回给VNode
     try {
       currentRenderingInstance = vm;
       vnode = render.call(vm._renderProxy, vm.$createElement);
@@ -163,7 +158,7 @@ export function renderMixin(Vue: Class<Component>) {
       vnode = createEmptyVNode();
     }
 
-    //* 将渲染Vnode的parent设置占位符vnode
+    //* 将渲染VNode的parent设置占位符VNode
     vnode.parent = _parentVnode;
     return vnode;
   };
